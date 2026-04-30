@@ -715,7 +715,6 @@
         <div style="font-size:10px;color:#8C8579;letter-spacing:0.04em;font-family:'DM Sans',sans-serif;">drip<span style="color:#C84B23;">.</span>check</div>
       </div>
     </div>
-    <button onclick="showKeyModal()" title="API Key settings" style="background:none;border:1.5px solid rgba(26,23,20,0.12);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;color:#8C8579;font-family:'DM Sans',sans-serif;transition:background 0.15s;" onmouseover="this.style.background='#EDE9E1'" onmouseout="this.style.background='none'">⚙ API Key</button>
   </header>
 
 <input type="file" id="cameraInput" accept="image/jpeg,image/png,image/webp" capture="environment" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;z-index:-1;">
@@ -984,48 +983,13 @@
   </main>
 </div>
 
-<!-- API KEY MODAL -->
-<div id="keyModal" style="display:none;position:fixed;inset:0;background:rgba(26,23,20,0.6);backdrop-filter:blur(6px);z-index:999;align-items:center;justify-content:center;padding:1.5rem;">
-  <div style="background:#F7F4EF;border-radius:20px;padding:2rem 1.75rem;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,0.2);">
-    <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:400;color:#1A1714;margin-bottom:0.4rem;">Add your Groq API key</div>
-    <div style="font-size:13px;color:#8C8579;margin-bottom:1.5rem;line-height:1.6;">Free at console.groq.com — fast, no credit card needed. Stored only in your browser.</div>
-    <input id="keyInput" type="password" placeholder="gsk_..." style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid rgba(26,23,20,0.15);background:#fff;font-family:'DM Sans',sans-serif;font-size:14px;color:#1A1714;outline:none;margin-bottom:8px;" onfocus="this.style.borderColor='#D85A30'" onblur="this.style.borderColor='rgba(26,23,20,0.15)'">
-    <div id="keyError" style="display:none;font-size:12px;color:#E24B4A;margin-bottom:10px;">Please enter a valid Groq API key (starts with gsk_)</div>
-    <button onclick="submitApiKey()" style="width:100%;padding:14px;border-radius:10px;background:#1A1714;color:#F7F4EF;border:none;font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;">Save & continue</button>
-    <div style="font-size:12px;color:#8C8579;text-align:center;margin-top:12px;">Get a free key at <a href="https://console.groq.com/keys" target="_blank" style="color:#D85A30;">console.groq.com</a></div>
-  </div>
-</div>
 
 <script>
+// ── Replace this with your Cloudflare Worker URL after deploying ──
+const WORKER_URL = 'https://poshak-proxy.chabianand31.workers.dev';
+
 let currentImageBase64 = null;
 let currentMediaType = 'image/jpeg';
-
-/* ── API KEY SETUP ── */
-function getApiKey() { return localStorage.getItem('dc_api_key') || ''; }
-function saveApiKey(k) { localStorage.setItem('dc_api_key', k.trim()); }
-
-function showKeyModal() {
-  document.getElementById('keyModal').style.display = 'flex';
-}
-function closeKeyModal() {
-  document.getElementById('keyModal').style.display = 'none';
-}
-function submitApiKey() {
-  const val = document.getElementById('keyInput').value.trim();
-  if (!val.startsWith('gsk_')) {
-    document.getElementById('keyError').style.display = 'block';
-    return;
-  }
-  saveApiKey(val);
-  closeKeyModal();
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  // Clear any old key — Groq keys start with gsk_
-  const stored = getApiKey();
-  if (stored && !stored.startsWith('gsk_')) localStorage.removeItem('dc_api_key');
-  if (!getApiKey()) showKeyModal();
-});
 
 function getMediaType(file) {
   if (file.type && file.type.startsWith('image/')) return file.type;
@@ -1210,13 +1174,10 @@ function stopProcessingAnimation() {
   clearInterval(processingInterval);
 }
 
-async function callGroq(apiKey, imageBase64, mediaType) {
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+async function callGroq(imageBase64, mediaType) {
+  const response = await fetch(WORKER_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       max_tokens: 1000,
@@ -1239,10 +1200,7 @@ async function startAnalysis() {
   startProcessingAnimation();
 
   try {
-    const apiKey = getApiKey();
-    if (!apiKey) { showKeyModal(); stopProcessingAnimation(); showScreen('home'); return; }
-
-    const { response, data } = await callGroq(apiKey, currentImageBase64, currentMediaType);
+    const { response, data } = await callGroq(currentImageBase64, currentMediaType);
 
     stopProcessingAnimation();
 
