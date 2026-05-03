@@ -909,7 +909,10 @@
         <!-- Score hero -->
         <div class="score-hero">
           <div class="score-sub-label">Your Style Score</div>
-          <div class="score-number" id="scoreNum">0</div>
+          <div style="display:flex;align-items:flex-end;justify-content:center;gap:6px;line-height:1;">
+            <div class="score-number" id="scoreNum">0</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:300;color:rgba(247,244,239,0.4);padding-bottom:14px;letter-spacing:0;">/10</div>
+          </div>
           <div class="score-label" id="scoreLabel">—</div>
           <div><button class="share-btn" id="shareBtn" onclick="shareScore()">Share my score</button></div>
         </div>
