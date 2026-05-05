@@ -1261,10 +1261,21 @@ SCORING RUBRIC (each out of 25, total out of 100):
 STRICT RULES:
 - Score ONLY if exactly one person is visible with outfit clearly shown
 - If no clear outfit, multiple people, or non-fashion image: set "scoreable": false
-- Nudge ONLY if total < 75. One nudge max.
-- Score >= 75: NO nudge at all.
+- Nudge ONLY if total < 80. One nudge max.
+- Score >= 80: NO nudge at all.
 - Tone: sharp, sassy, warm. Like a fashion editor best friend.
 - Be vigilant about accessories — they matter to the score.
+
+SCORING CALIBRATION — this is critical:
+- Be honest, not harsh. But do not inflate scores to be nice.
+- A plain white tee and jeans with no thought = 4-5. Not 7.
+- An average everyday outfit with no clear intention = 5-6.
+- A well put-together outfit with clear colour story and fit = 7-7.5.
+- A genuinely great outfit — intentional, on-trend, well-fitted = 8-8.5.
+- Reserve 9-10 for truly exceptional, editorial-level looks.
+- Most real-world outfits should score between 4.5 and 7. That is the honest range.
+- Do NOT round up to make someone feel good. A 5 is a 5.
+- Missing accessories, clashing colours, poor fit = deduct properly. Do not be shy.
 
 RESPONSE LENGTH — THIS IS CRITICAL:
 - vibe_line: MAX 10 words. One punchy sentence. No full stops needed. Witty.
@@ -1273,10 +1284,10 @@ RESPONSE LENGTH — THIS IS CRITICAL:
 
 SCORE BANDS (total is out of 10):
 9-10: "Killing it. Full stop."
-7.5-8.9: "Nailed the brief"
-5.5-7.4: "So close — almost there"
-3.5-5.4: "Good bones, needs work"
-0-3.4: "Let's start from scratch"
+8-8.9: "Nailed the brief"
+6.5-7.9: "So close — almost there"
+4.5-6.4: "Good bones, needs work"
+0-4.4: "Let's start from scratch"
 
 TONE RULES:
 - Gender neutral always. No "girl", "queen", "king" — just speak to the person.
@@ -1641,12 +1652,12 @@ function displayResult(result) {
 
   // Feedback content
   document.getElementById('vibeText').textContent = vibe_line;
-  if (total < 75) document.getElementById('vibeCard').classList.add('amber');
+  if (total < 80) document.getElementById('vibeCard').classList.add('amber');
   document.getElementById('workingText').textContent = whats_working;
 
   const nudgeCard = document.getElementById('nudgeCard');
   const newlookBtn = document.getElementById('newlookBtn');
-  if (nudge && total < 75) {
+  if (nudge && total < 80) {
     nudgeCard.style.display = 'flex';
     document.getElementById('nudgeText').textContent = nudge;
     newlookBtn.style.display = image_prompt ? 'inline-flex' : 'none';
