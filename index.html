@@ -1342,12 +1342,14 @@ INDIA-SPECIFIC TRENDS IN (reward):
 - Comfort-first silhouettes with a strong colour story
 
 IMAGE PROMPT RULES (for image_prompt field):
-- Only populate image_prompt when nudge is not null (score < 75)
-- Write a Stable Diffusion style prompt describing the IMPROVED outfit on a person
-- Be specific: include clothing items, colours, silhouette, styling details
-- Always end with: "fashion editorial, full body shot, soft studio background, professional photography"
-- MAX 40 words total
-- Example: "person wearing fitted cream linen kurta, tailored dark palazzo pants, statement gold jhumkas, sneakers, fashion editorial, full body shot, soft studio background, professional photography"
+- Only populate image_prompt when nudge is not null (score < 80)
+- Write a high-quality Flux image generation prompt for the IMPROVED outfit
+- Describe exactly ONE person, ONE outfit, standing still, facing camera
+- Be very specific: exact clothing items, exact colours, fabric, fit, accessories
+- Do NOT use vague words like "stylish" or "improved" — describe what they're actually wearing
+- Structure: "[gender-neutral person] wearing [specific top], [specific bottom], [specific shoes], [specific accessories], [occasion context], fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
+- MAX 45 words
+- Example: "person wearing structured cream linen kurta, tailored charcoal palazzo pants, gold jhumka earrings, white sneakers, daytime casual, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
 
 Respond ONLY with valid JSON, no markdown:
 {
@@ -1677,29 +1679,58 @@ function showNewLook() {
   if (!currentImagePrompt) return;
   const overlay = document.getElementById('newlookOverlay');
   const wrap = document.getElementById('newlookImgWrap');
-  const loading = document.getElementById('newlookLoading');
 
-  // Reset to loading state
-  wrap.innerHTML = '';
-  const loadEl = document.createElement('div');
-  loadEl.className = 'newlook-loading';
-  loadEl.innerHTML = '<div class="newlook-spinner"></div><div class="newlook-loading-text">Generating your new look...</div>';
-  wrap.appendChild(loadEl);
   overlay.classList.add('open');
+  generateLookImage(wrap);
+}
 
-  const encoded = encodeURIComponent(currentImagePrompt);
-  const url = `https://image.pollinations.ai/prompt/${encoded}?width=512&height=768&nologo=true&seed=${Date.now()}`;
+async function generateLookImage(wrap) {
+  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Generating your new look...</div></div>';
 
-  const img = new Image();
-  img.onload = () => {
+  const negative = encodeURIComponent('duplicate person, two people, multiple figures, artifacts, distorted limbs, cloning, extra arms, blurry, low quality');
+  const prompt = encodeURIComponent(currentImagePrompt + ', highly detailed, photorealistic');
+  const seed = Math.floor(Math.random() * 99999);
+  const url = `https://image.pollinations.ai/prompt/${prompt}?width=512&height=768&model=flux&negative=${negative}&seed=${seed}`;
+
+  function showRetry(msg) {
+    wrap.innerHTML = `
+      <div style="padding:2rem;text-align:center;">
+        <div style="font-size:13px;color:#8C8579;line-height:1.6;margin-bottom:1rem;">${msg}</div>
+        <button onclick="generateLookImage(document.getElementById('newlookImgWrap'))" style="padding:8px 20px;border-radius:8px;background:#D85A30;color:#fff;border:none;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Try again</button>
+      </div>`;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
+
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (res.status === 429) {
+      showRetry('Pollinations is busy right now.<br>Wait a few seconds and try again.');
+      return;
+    }
+    if (!res.ok) {
+      showRetry(`Generation failed (${res.status}).<br>Try again in a moment.`);
+      return;
+    }
+
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
     wrap.innerHTML = '';
-    img.style.borderRadius = '16px';
+    const img = document.createElement('img');
+    img.src = objUrl;
+    img.style.cssText = 'width:100%;border-radius:16px;display:block;';
     wrap.appendChild(img);
-  };
-  img.onerror = () => {
-    wrap.innerHTML = '<div style="padding:2rem;text-align:center;font-size:13px;color:#8C8579;">Could not generate preview.<br>Try again in a moment.</div>';
-  };
-  img.src = url;
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      showRetry('Taking too long to generate.<br>Pollinations may be busy — try again.');
+    } else {
+      showRetry('Something went wrong.<br>Try again in a moment.');
+    }
+  }
 }
 
 function closeNewLook(e) {
