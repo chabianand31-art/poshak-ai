@@ -475,12 +475,29 @@
   .dim-name-wrap { display: flex; align-items: center; gap: 8px; }
   .dim-name { font-size: 13px; color: var(--ink-soft); font-weight: 400; }
   .dim-chevron {
-    width: 14px; height: 14px;
-    stroke: var(--muted); fill: none; stroke-width: 2;
+    width: 16px; height: 16px;
+    stroke: var(--coral); fill: none; stroke-width: 2.5;
     transition: transform 0.25s;
     flex-shrink: 0;
   }
   .dim-item.open .dim-chevron { transform: rotate(180deg); }
+
+  /* Tap hint shown below bar, hidden when open */
+  .dim-tap-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 7px;
+    font-size: 11px;
+    color: var(--coral);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .dim-tap-hint svg { width: 11px; height: 11px; stroke: var(--coral); fill: none; stroke-width: 2.5; flex-shrink: 0; }
+  .dim-item.visible .dim-tap-hint { opacity: 1; }
+  .dim-item.open .dim-tap-hint { display: none; }
 
   .dim-score-label {
     font-size: 13px;
@@ -799,6 +816,86 @@
   }
   .fb-skip:hover { color: var(--ink); }
 
+  /* ── NEW LOOK MODAL ── */
+  .newlook-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26,23,20,0.75);
+    z-index: 300; align-items: flex-end; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .newlook-overlay.open { display: flex; }
+  .newlook-sheet {
+    background: var(--parchment);
+    border-radius: 24px 24px 0 0;
+    padding: 1.5rem 1.5rem 2.5rem;
+    width: 100%; max-width: 540px;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .newlook-handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(26,23,20,0.15);
+    margin: 0 auto 1.25rem;
+  }
+  .newlook-label {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--coral); font-weight: 500; margin-bottom: 4px;
+  }
+  .newlook-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 400; color: var(--ink);
+    margin-bottom: 1rem; line-height: 1.3;
+  }
+  .newlook-img-wrap {
+    width: 100%; border-radius: 16px; overflow: hidden;
+    background: var(--parchment-dark);
+    min-height: 300px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; margin-bottom: 1rem;
+  }
+  .newlook-img-wrap img {
+    width: 100%; display: block; border-radius: 16px;
+  }
+  .newlook-loading {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 12px;
+    padding: 3rem 0;
+  }
+  .newlook-spinner {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 2px solid var(--coral-mid);
+    border-top-color: var(--coral);
+    animation: spin 0.85s linear infinite;
+  }
+  .newlook-loading-text { font-size: 13px; color: var(--muted); }
+  .newlook-disclaimer {
+    font-size: 11px; color: var(--muted); text-align: center;
+    line-height: 1.5; margin-bottom: 1rem;
+  }
+  .newlook-close {
+    width: 100%; padding: 13px; border-radius: 12px;
+    background: transparent; color: var(--muted);
+    border: 1.5px solid rgba(26,23,20,0.12);
+    font-size: 14px; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .newlook-close:hover { background: var(--parchment-dark); }
+
+  /* See new look button on nudge card */
+  .newlook-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 10px;
+    font-size: 12px; font-weight: 500;
+    color: var(--coral-dark);
+    background: transparent; border: none;
+    cursor: pointer; padding: 0;
+    font-family: 'DM Sans', sans-serif;
+    text-decoration: underline; text-underline-offset: 3px;
+    transition: opacity 0.15s;
+  }
+  .newlook-btn:hover { opacity: 0.7; }
+
   /* Thank you state */
   .thankyou-wrap { text-align: center; padding: 2rem 0; }
   .thankyou-icon { font-size: 48px; margin-bottom: 1rem; }
@@ -926,9 +1023,10 @@
                   <div class="dim-name">Colour matching</div>
                   <svg class="dim-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-                <div class="dim-score-label" id="val0">0/25</div>
+                <div class="dim-score-label" id="val0">0.0/10</div>
               </div>
               <div class="dim-track"><div class="dim-bar" id="bar0"></div></div>
+              <div class="dim-tap-hint"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Tap to see how to improve</div>
             </div>
             <div class="dim-dropdown" id="tip0">
               <div class="dim-tip-label">How to score higher</div>
@@ -943,9 +1041,10 @@
                   <div class="dim-name">How well it goes together</div>
                   <svg class="dim-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-                <div class="dim-score-label" id="val1">0/25</div>
+                <div class="dim-score-label" id="val1">0.0/10</div>
               </div>
               <div class="dim-track"><div class="dim-bar" id="bar1"></div></div>
+              <div class="dim-tap-hint"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Tap to see how to improve</div>
             </div>
             <div class="dim-dropdown" id="tip1">
               <div class="dim-tip-label">How to score higher</div>
@@ -960,9 +1059,10 @@
                   <div class="dim-name">Effort &amp; finishing</div>
                   <svg class="dim-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-                <div class="dim-score-label" id="val2">0/25</div>
+                <div class="dim-score-label" id="val2">0.0/10</div>
               </div>
               <div class="dim-track"><div class="dim-bar" id="bar2"></div></div>
+              <div class="dim-tap-hint"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Tap to see how to improve</div>
             </div>
             <div class="dim-dropdown" id="tip2">
               <div class="dim-tip-label">How to score higher</div>
@@ -977,9 +1077,10 @@
                   <div class="dim-name">Fit &amp; shape</div>
                   <svg class="dim-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-                <div class="dim-score-label" id="val3">0/25</div>
+                <div class="dim-score-label" id="val3">0.0/10</div>
               </div>
               <div class="dim-track"><div class="dim-bar" id="bar3"></div></div>
+              <div class="dim-tap-hint"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Tap to see how to improve</div>
             </div>
             <div class="dim-dropdown" id="tip3">
               <div class="dim-tip-label">How to score higher</div>
@@ -1012,6 +1113,9 @@
             <div class="nudge-inner-text">
               <div class="nudge-label">Fix this one thing</div>
               <div class="nudge-text" id="nudgeText"></div>
+              <button class="newlook-btn" id="newlookBtn" onclick="showNewLook()" style="display:none;">
+                ✦ See how your new look could come out
+              </button>
             </div>
           </div>
 
@@ -1108,6 +1212,22 @@
   </main>
 </div>
 
+<!-- NEW LOOK MODAL -->
+<div class="newlook-overlay" id="newlookOverlay" onclick="closeNewLook(event)">
+  <div class="newlook-sheet" id="newlookSheet">
+    <div class="newlook-handle"></div>
+    <div class="newlook-label">AI Preview</div>
+    <div class="newlook-title" id="newlookTitle">Here's your improved look</div>
+    <div class="newlook-img-wrap" id="newlookImgWrap">
+      <div class="newlook-loading" id="newlookLoading">
+        <div class="newlook-spinner"></div>
+        <div class="newlook-loading-text">Generating your new look...</div>
+      </div>
+    </div>
+    <div class="newlook-disclaimer">AI-generated preview — for inspiration only. Results may vary.</div>
+    <button class="newlook-close" onclick="closeNewLook()">Close</button>
+  </div>
+</div>
 
 <script>
 // ── Replace this with your Cloudflare Worker URL after deploying ──
@@ -1210,6 +1330,14 @@ INDIA-SPECIFIC TRENDS IN (reward):
 - Co-ords with cargo or utility details
 - Comfort-first silhouettes with a strong colour story
 
+IMAGE PROMPT RULES (for image_prompt field):
+- Only populate image_prompt when nudge is not null (score < 75)
+- Write a Stable Diffusion style prompt describing the IMPROVED outfit on a person
+- Be specific: include clothing items, colours, silhouette, styling details
+- Always end with: "fashion editorial, full body shot, soft studio background, professional photography"
+- MAX 40 words total
+- Example: "person wearing fitted cream linen kurta, tailored dark palazzo pants, statement gold jhumkas, sneakers, fashion editorial, full body shot, soft studio background, professional photography"
+
 Respond ONLY with valid JSON, no markdown:
 {
   "scoreable": true,
@@ -1218,6 +1346,7 @@ Respond ONLY with valid JSON, no markdown:
   "vibe_line": "",
   "whats_working": "",
   "nudge": null,
+  "image_prompt": null,
   "tips": {
     "color_harmony": "One specific tip to improve color harmony. Max 15 words.",
     "outfit_cohesion": "One specific tip to improve outfit cohesion. Max 15 words.",
@@ -1243,6 +1372,7 @@ function showScreen(id) {
 
 function goHome() {
   currentImageBase64 = null;
+  currentImagePrompt = null;
   document.getElementById('fileInput').value = '';
   document.getElementById('cameraInput').value = '';
   document.querySelectorAll('.dim-item').forEach(d => d.classList.remove('open'));
@@ -1434,7 +1564,8 @@ function getPillClass(score) {
 function displayResult(result) {
   showScreen('result');
 
-  const { scores, label, vibe_line, whats_working, nudge, tips } = result;
+  const { scores, label, vibe_line, whats_working, nudge, tips, image_prompt } = result;
+  currentImagePrompt = image_prompt || null;
   const total = scores.total;
   const dims = [scores.color_harmony, scores.outfit_cohesion, scores.intentionality, scores.silhouette];
   const tipTexts = tips ? [
@@ -1463,7 +1594,7 @@ function displayResult(result) {
     const valEl = document.getElementById('val' + i);
     const barEl = document.getElementById('bar' + i);
     dimEl.classList.remove('visible');
-    valEl.textContent = '0/25';
+    valEl.textContent = '0.0/10';
     valEl.className = 'dim-score-label';
     barEl.style.width = '0%';
     barEl.className = 'dim-bar';
@@ -1493,7 +1624,7 @@ function displayResult(result) {
         const t = Math.min((now - startTime) / 700, 1);
         const val = Math.round(dimScore * easeOut(t));
         const pct = Math.round((val / 25) * 100);
-        valEl.textContent = val + '/25';
+        valEl.textContent = (val / 25 * 10).toFixed(1) + '/10';
         barEl.style.width = pct + '%';
         if (t < 1) requestAnimationFrame(tick);
       }
@@ -1514,16 +1645,55 @@ function displayResult(result) {
   document.getElementById('workingText').textContent = whats_working;
 
   const nudgeCard = document.getElementById('nudgeCard');
+  const newlookBtn = document.getElementById('newlookBtn');
   if (nudge && total < 75) {
     nudgeCard.style.display = 'flex';
     document.getElementById('nudgeText').textContent = nudge;
+    newlookBtn.style.display = image_prompt ? 'inline-flex' : 'none';
   } else {
     nudgeCard.style.display = 'none';
+    newlookBtn.style.display = 'none';
   }
 
   setTimeout(() => {
     document.getElementById('feedbackSection').classList.add('visible');
   }, 1800);
+}
+
+let currentImagePrompt = null;
+
+function showNewLook() {
+  if (!currentImagePrompt) return;
+  const overlay = document.getElementById('newlookOverlay');
+  const wrap = document.getElementById('newlookImgWrap');
+  const loading = document.getElementById('newlookLoading');
+
+  // Reset to loading state
+  wrap.innerHTML = '';
+  const loadEl = document.createElement('div');
+  loadEl.className = 'newlook-loading';
+  loadEl.innerHTML = '<div class="newlook-spinner"></div><div class="newlook-loading-text">Generating your new look...</div>';
+  wrap.appendChild(loadEl);
+  overlay.classList.add('open');
+
+  const encoded = encodeURIComponent(currentImagePrompt);
+  const url = `https://image.pollinations.ai/prompt/${encoded}?width=512&height=768&nologo=true&seed=${Date.now()}`;
+
+  const img = new Image();
+  img.onload = () => {
+    wrap.innerHTML = '';
+    img.style.borderRadius = '16px';
+    wrap.appendChild(img);
+  };
+  img.onerror = () => {
+    wrap.innerHTML = '<div style="padding:2rem;text-align:center;font-size:13px;color:#8C8579;">Could not generate preview.<br>Try again in a moment.</div>';
+  };
+  img.src = url;
+}
+
+function closeNewLook(e) {
+  if (e && e.target !== document.getElementById('newlookOverlay')) return;
+  document.getElementById('newlookOverlay').classList.remove('open');
 }
 
 function shareScore() {
