@@ -1347,9 +1347,11 @@ IMAGE PROMPT RULES (for image_prompt field):
 - Describe exactly ONE person, ONE outfit, standing still, facing camera
 - Be very specific: exact clothing items, exact colours, fabric, fit, accessories
 - Do NOT use vague words like "stylish" or "improved" — describe what they're actually wearing
-- Structure: "[gender-neutral person] wearing [specific top], [specific bottom], [specific shoes], [specific accessories], [occasion context], fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
+- Structure: "[man/woman] wearing [specific top], [specific bottom], [specific shoes], [specific accessories], [occasion context], fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
+- CRITICAL: Start with "man" or "woman" based on the gender presentation you see in the photo. Never use "person" — image models default to female if gender is unspecified.
 - MAX 45 words
-- Example: "person wearing structured cream linen kurta, tailored charcoal palazzo pants, gold jhumka earrings, white sneakers, daytime casual, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
+- Example (man): "man wearing structured cream linen kurta, tailored charcoal palazzo pants, gold jhumka earrings, white sneakers, daytime casual, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
+- Example (woman): "woman wearing fitted silk co-ord set in rust, statement belt, strappy heels, gold hoops, evening casual, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
 
 Respond ONLY with valid JSON, no markdown:
 {
