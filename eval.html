@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poshak AI — Eval</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #F7F4EF; color: #1A1714; min-height: 100vh; }
+
+  header {
+    background: #1A1714; color: #F7F4EF;
+    padding: 1rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left h1 { font-size: 16px; font-weight: 500; }
+  .header-left p { font-size: 12px; color: #8C8579; margin-top: 2px; }
+
+  .header-right { display: flex; gap: 10px; align-items: center; }
+
+  .progress-badge {
+    font-size: 12px; color: #8C8579;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px; padding: 5px 14px;
+  }
+  .progress-badge span { color: #D85A30; font-weight: 500; }
+
+  .btn {
+    padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; border: none;
+    transition: filter 0.15s, opacity 0.15s;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+  .btn-primary { background: #D85A30; color: #fff; }
+  .btn-outline { background: transparent; color: #F7F4EF; border: 1px solid rgba(255,255,255,0.2); }
+
+  /* Stats bar */
+  .stats-bar {
+    background: #fff; border-bottom: 1px solid rgba(26,23,20,0.08);
+    padding: 0.75rem 2rem;
+    display: flex; gap: 2rem; flex-wrap: wrap;
+  }
+  .stat-item { text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 500; color: #D85A30; line-height: 1; }
+  .stat-lbl { font-size: 11px; color: #8C8579; margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    padding: 1.5rem 2rem;
+  }
+
+  /* Card */
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid rgba(26,23,20,0.08);
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+
+  .card-img-wrap { position: relative; height: 200px; background: #EDE9E1; overflow: hidden; }
+  .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .cat-badge {
+    position: absolute; top: 8px; left: 8px;
+    font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .cat-trendy    { background: rgba(26,23,20,0.75); color: #D85A30; }
+  .cat-dated     { background: rgba(26,23,20,0.75); color: #EF9F27; }
+  .cat-shabby    { background: rgba(26,23,20,0.75); color: #8C8579; }
+  .cat-bad-colors { background: rgba(26,23,20,0.75); color: #E24B4A; }
+
+  .score-badge {
+    position: absolute; top: 8px; right: 8px;
+    font-size: 14px; font-weight: 500;
+    background: #1A1714; color: #fff;
+    padding: 4px 10px; border-radius: 20px;
+    display: none;
+  }
+  .score-badge.visible { display: block; }
+  .score-badge.high { color: #D85A30; }
+  .score-badge.mid  { color: #EF9F27; }
+  .score-badge.low  { color: #E24B4A; }
+
+  .card-body { padding: 0.85rem 1rem; }
+
+  .card-filename { font-size: 11px; color: #8C8579; margin-bottom: 0.5rem; }
+
+  .card-status {
+    font-size: 12px; color: #8C8579;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #C5BFB5; flex-shrink: 0;
+  }
+  .status-dot.running { background: #EF9F27; animation: pulse 1s infinite; }
+  .status-dot.done    { background: #639922; }
+  .status-dot.error   { background: #E24B4A; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .result-block { display: none; margin-top: 0.75rem; }
+  .result-block.visible { display: block; }
+
+  .vibe-text {
+    font-size: 13px; font-style: italic; color: #1A1714;
+    line-height: 1.45; margin-bottom: 6px;
+    padding: 8px 10px;
+    background: #F7F4EF; border-radius: 8px;
+  }
+  .result-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .result-pill {
+    font-size: 11px; padding: 3px 8px; border-radius: 6px;
+    flex: 1; min-width: 0;
+  }
+  .pill-green { background: #EDF7E4; color: #3B6D11; border: 1px solid rgba(99,153,34,0.15); }
+  .pill-coral { background: #FAECE7; color: #993C1D; border: 1px solid #F5C4B3; }
+
+  /* Dim bars */
+  .dim-bars { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .dim-row { display: flex; align-items: center; gap: 8px; }
+  .dim-label { font-size: 10px; color: #8C8579; width: 80px; flex-shrink: 0; letter-spacing: 0.02em; }
+  .dim-track { flex: 1; height: 5px; background: #EDE9E1; border-radius: 3px; overflow: hidden; }
+  .dim-fill  { height: 100%; border-radius: 3px; background: #D85A30; }
+  .dim-val   { font-size: 10px; color: #8C8579; width: 28px; text-align: right; flex-shrink: 0; }
+
+  /* Human rating */
+  .rating-row {
+    display: flex; gap: 6px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(26,23,20,0.06);
+  }
+  .rating-lbl { font-size: 11px; color: #8C8579; margin-right: 2px; align-self: center; }
+  .rate-btn {
+    padding: 4px 10px; border-radius: 6px; font-size: 13px;
+    border: 1px solid rgba(26,23,20,0.1); background: #fff;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  }
+  .rate-btn:hover { background: #F7F4EF; }
+  .rate-btn.selected { border-color: #D85A30; background: #FAECE7; }
+
+  /* Export modal overlay */
+  .export-output {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26,23,20,0.7); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .export-output.open { display: flex; }
+  .export-box {
+    background: #fff; border-radius: 16px; padding: 1.5rem;
+    width: 90%; max-width: 600px; max-height: 80vh;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .export-box h2 { font-size: 15px; font-weight: 500; }
+  .export-box textarea {
+    flex: 1; min-height: 300px; font-family: monospace; font-size: 11px;
+    border: 1px solid rgba(26,23,20,0.12); border-radius: 8px;
+    padding: 10px; resize: none; color: #1A1714;
+  }
+  .export-actions { display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Poshak AI — Eval</h1>
+    <p>20 images · trendy / dated / shabby / bad-colors</p>
+  </div>
+  <div class="header-right">
+    <div class="progress-badge">Scored: <span id="scoredCount">0</span> / 20</div>
+    <button class="btn btn-outline" onclick="exportResults()">Export CSV</button>
+    <button class="btn btn-primary" id="runAllBtn" onclick="runAll()">Run All</button>
+  </div>
+</header>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat-item"><div class="stat-val" id="avgAll">—</div><div class="stat-lbl">Avg score</div></div>
+  <div class="stat-item"><div class="stat-val" id="avgTrendy">—</div><div class="stat-lbl">Trendy avg</div></div>
+  <div class="stat-item"><div class="stat-val" id="avgDated">—</div><div class="stat-lbl">Dated avg</div></div>
+  <div class="stat-item"><div class="stat-val" id="avgShabby">—</div><div class="stat-lbl">Shabby avg</div></div>
+  <div class="stat-item"><div class="stat-val" id="avgBadColors">—</div><div class="stat-lbl">Bad-colors avg</div></div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<!-- Export overlay -->
+<div class="export-output" id="exportOverlay">
+  <div class="export-box">
+    <h2>Export — CSV</h2>
+    <textarea id="exportText" readonly></textarea>
+    <div class="export-actions">
+      <button class="btn btn-outline" style="color:#1A1714;border-color:rgba(26,23,20,0.2);" onclick="copyExport()">Copy</button>
+      <button class="btn btn-primary" onclick="closeExport()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WORKER_URL = 'https://poshak-proxy.chabianand31.workers.dev';
+
+const SYSTEM_PROMPT = `You are drip.check — a sharp, witty AI stylist. Score outfit photos on 4 dimensions.
+
+SCORING RUBRIC (each out of 25, total out of 100):
+1. Colour Matching (0-25): Do the colours work together across all pieces?
+2. How Well It Goes Together (0-25): Do the pieces belong together in style and formality?
+3. Effort & Finishing (0-25): Does the look feel put together? Clothes neat, accessories considered?
+4. Fit & Shape (0-25): Is the fit right on the body? Do the proportions work?
+
+STRICT RULES:
+- Score ONLY if exactly one person is visible with outfit clearly shown
+- If no clear outfit, multiple people, or non-fashion image: set "scoreable": false
+- Nudge ONLY if total < 75. One nudge max.
+- Score >= 75: NO nudge at all.
+- Tone: sharp, sassy, warm. Like a fashion editor best friend.
+
+RESPONSE LENGTH:
+- vibe_line: MAX 10 words. One punchy sentence.
+- whats_working: MAX 15 words. One sentence. Specific.
+- nudge: MAX 15 words. One sentence. Specific fix only.
+
+SCORE BANDS (total is out of 10):
+9-10: "Killing it. Full stop."
+7.5-8.9: "Nailed the brief"
+5.5-7.4: "So close — almost there"
+3.5-5.4: "Good bones, needs work"
+0-3.4: "Let's start from scratch"
+
+TONE RULES:
+- Gender neutral always.
+- Indian English — warm, direct, a little cheeky.
+- Reference Indian clothing naturally when relevant.
+- Short sentences. Get to the point.
+
+2026 TREND AWARENESS:
+COLOURS IN: Cloud Dancer (off-white), Burnished Lilac, Lava Falls (deep red-brown), Alexandrite (teal), Coral Red, Forest Moss, Mandarin Orange, Cherry Red, Chartreuse. Bold saturated tones over pastels.
+SILHOUETTES IN: Asymmetric cuts, cropped boxy jackets, structured corsets, gauchos, 1970s retro tailoring, oversized fits with intentional proportions.
+FABRICS IN: Bouclé, jacquard, matte velvet, crochet, embroidery, linen, cotton blends.
+ACCESSORIES IN: Statement belts with oversized buckles, bold sculptural jewellery, woven leather bags, pointed/square-toe shoes, colourful socks.
+WHAT'S OUT: Drop-waist dresses, bubble hems, bodycon, ultra-skinny fits, faded denim, coquette aesthetic, dainty jewellery, micro bags, polka dots.
+INDIA-SPECIFIC IN: Kurta with sneakers, saree with crop top, jhumkas with streetwear, Indo-Western fusion with clear intention.
+
+Respond ONLY with valid JSON, no markdown:
+{"scoreable":true,"scores":{"color_harmony":0,"outfit_cohesion":0,"intentionality":0,"silhouette":0,"total":0},"label":"","vibe_line":"","whats_working":"","nudge":null,"tips":{"color_harmony":"","outfit_cohesion":"","intentionality":"","silhouette":""}}
+If not scoreable: {"scoreable":false,"reason":"brief reason"}`;
+
+const IMAGES = [
+  { file: 'eval-images/trendy_1.jpg',     category: 'trendy' },
+  { file: 'eval-images/trendy_2.jpg',     category: 'trendy' },
+  { file: 'eval-images/trendy_3.jpg',     category: 'trendy' },
+  { file: 'eval-images/trendy_4.jpg',     category: 'trendy' },
+  { file: 'eval-images/trendy_5.jpg',     category: 'trendy' },
+  { file: 'eval-images/dated_1.jpg',      category: 'dated' },
+  { file: 'eval-images/dated_2.jpg',      category: 'dated' },
+  { file: 'eval-images/dated_3.jpg',      category: 'dated' },
+  { file: 'eval-images/dated_4.jpg',      category: 'dated' },
+  { file: 'eval-images/dated_5.jpg',      category: 'dated' },
+  { file: 'eval-images/shabby_1.jpg',     category: 'shabby' },
+  { file: 'eval-images/shabby_2.jpg',     category: 'shabby' },
+  { file: 'eval-images/shabby_3.jpg',     category: 'shabby' },
+  { file: 'eval-images/shabby_4.jpg',     category: 'shabby' },
+  { file: 'eval-images/shabby_5.jpg',     category: 'shabby' },
+  { file: 'eval-images/bad_colors_1.jpg', category: 'bad-colors' },
+  { file: 'eval-images/bad_colors_2.jpg', category: 'bad-colors' },
+  { file: 'eval-images/bad_colors_3.jpg', category: 'bad-colors' },
+  { file: 'eval-images/bad_colors_4.jpg', category: 'bad-colors' },
+  { file: 'eval-images/bad_colors_5.jpg', category: 'bad-colors' },
+];
+
+// State
+const results = new Array(20).fill(null);
+const ratings = new Array(20).fill(null); // 'good' | 'ok' | 'bad'
+
+// Build grid
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  IMAGES.forEach((img, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'card-' + i;
+    card.innerHTML = `
+      <div class="card-img-wrap">
+        <img src="${img.file}" alt="${img.file}" loading="lazy">
+        <div class="cat-badge cat-${img.category}">${img.category}</div>
+        <div class="score-badge" id="score-badge-${i}"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-filename">${img.file.split('/').pop()}</div>
+        <div class="card-status">
+          <div class="status-dot" id="dot-${i}"></div>
+          <span id="status-text-${i}">Pending</span>
+        </div>
+        <div class="result-block" id="result-${i}">
+          <div class="vibe-text" id="vibe-${i}"></div>
+          <div class="result-row">
+            <div class="result-pill pill-green" id="working-${i}"></div>
+          </div>
+          <div class="result-row" id="nudge-row-${i}" style="display:none;">
+            <div class="result-pill pill-coral" id="nudge-${i}"></div>
+          </div>
+          <div class="dim-bars">
+            <div class="dim-row">
+              <div class="dim-label">Colour</div>
+              <div class="dim-track"><div class="dim-fill" id="bar-color-${i}" style="width:0%"></div></div>
+              <div class="dim-val" id="val-color-${i}">—</div>
+            </div>
+            <div class="dim-row">
+              <div class="dim-label">Cohesion</div>
+              <div class="dim-track"><div class="dim-fill" id="bar-cohesion-${i}" style="width:0%"></div></div>
+              <div class="dim-val" id="val-cohesion-${i}">—</div>
+            </div>
+            <div class="dim-row">
+              <div class="dim-label">Effort</div>
+              <div class="dim-track"><div class="dim-fill" id="bar-effort-${i}" style="width:0%"></div></div>
+              <div class="dim-val" id="val-effort-${i}">—</div>
+            </div>
+            <div class="dim-row">
+              <div class="dim-label">Fit</div>
+              <div class="dim-track"><div class="dim-fill" id="bar-fit-${i}" style="width:0%"></div></div>
+              <div class="dim-val" id="val-fit-${i}">—</div>
+            </div>
+          </div>
+          <div class="rating-row">
+            <div class="rating-lbl">Your call:</div>
+            <button class="rate-btn" id="rate-good-${i}" onclick="rate(${i},'good')" title="Model nailed it">👍</button>
+            <button class="rate-btn" id="rate-ok-${i}"   onclick="rate(${i},'ok')"   title="Close but not quite">🤔</button>
+            <button class="rate-btn" id="rate-bad-${i}"  onclick="rate(${i},'bad')"  title="Model got it wrong">👎</button>
+          </div>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function setStatus(i, state, text) {
+  const dot = document.getElementById('dot-' + i);
+  const st  = document.getElementById('status-text-' + i);
+  dot.className = 'status-dot ' + state;
+  st.textContent = text;
+}
+
+async function imageToBase64(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const MAX = 1024;
+      let { width: w, height: h } = img;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else       { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.82).split(',')[1]);
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+async function scoreImage(i) {
+  setStatus(i, 'running', 'Scoring...');
+  const card = document.getElementById('card-' + i);
+  card.style.outline = '2px solid #EF9F27';
+
+  try {
+    const b64 = await imageToBase64(IMAGES[i].file);
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        max_tokens: 800,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: [
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${b64}` } },
+            { type: 'text', text: 'Score this outfit.' }
+          ]}
+        ]
+      })
+    });
+
+    const data = await response.json();
+    const raw = data.choices?.[0]?.message?.content || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+    results[i] = { ...result, category: IMAGES[i].category, file: IMAGES[i].file };
+
+    if (!result.scoreable) {
+      setStatus(i, 'error', 'Not scoreable: ' + (result.reason || ''));
+      card.style.outline = '2px solid #E24B4A';
+      return;
+    }
+
+    displayCard(i, result);
+    setStatus(i, 'done', 'Done');
+    card.style.outline = '2px solid #639922';
+
+  } catch (err) {
+    setStatus(i, 'error', 'Error: ' + err.message);
+    card.style.outline = '2px solid #E24B4A';
+    results[i] = { error: err.message, category: IMAGES[i].category, file: IMAGES[i].file };
+  }
+  updateStats();
+}
+
+function displayCard(i, r) {
+  const { scores, vibe_line, whats_working, nudge } = r;
+  const total10 = (scores.total / 10).toFixed(1);
+
+  // Score badge
+  const badge = document.getElementById('score-badge-' + i);
+  badge.textContent = total10 + '/10';
+  badge.classList.add('visible');
+  if (scores.total >= 75) badge.classList.add('high');
+  else if (scores.total >= 50) badge.classList.add('mid');
+  else badge.classList.add('low');
+
+  // Text
+  document.getElementById('vibe-' + i).textContent = '"' + vibe_line + '"';
+  document.getElementById('working-' + i).textContent = '✓ ' + whats_working;
+
+  if (nudge && scores.total < 75) {
+    document.getElementById('nudge-row-' + i).style.display = 'flex';
+    document.getElementById('nudge-' + i).textContent = '→ ' + nudge;
+  }
+
+  // Bars
+  const dims = [
+    ['color', scores.color_harmony],
+    ['cohesion', scores.outfit_cohesion],
+    ['effort', scores.intentionality],
+    ['fit', scores.silhouette],
+  ];
+  dims.forEach(([key, val]) => {
+    document.getElementById('bar-' + key + '-' + i).style.width = ((val / 25) * 100) + '%';
+    document.getElementById('val-' + key + '-' + i).textContent = val;
+  });
+
+  document.getElementById('result-' + i).classList.add('visible');
+}
+
+function rate(i, val) {
+  ratings[i] = val;
+  ['good', 'ok', 'bad'].forEach(v => {
+    document.getElementById('rate-' + v + '-' + i).classList.toggle('selected', v === val);
+  });
+}
+
+async function runAll() {
+  const btn = document.getElementById('runAllBtn');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+
+  for (let i = 0; i < IMAGES.length; i++) {
+    await scoreImage(i);
+    updateScoredCount();
+    await new Promise(r => setTimeout(r, 400)); // small delay between calls
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Run Again';
+}
+
+function updateScoredCount() {
+  const done = results.filter(r => r && r.scoreable).length;
+  document.getElementById('scoredCount').textContent = done;
+}
+
+function updateStats() {
+  const scored = results.filter(r => r && r.scoreable);
+  const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length / 10).toFixed(1) : '—';
+
+  const byCategory = cat => scored.filter(r => r.category === cat).map(r => r.scores.total);
+
+  document.getElementById('avgAll').textContent       = avg(scored.map(r => r.scores.total));
+  document.getElementById('avgTrendy').textContent    = avg(byCategory('trendy'));
+  document.getElementById('avgDated').textContent     = avg(byCategory('dated'));
+  document.getElementById('avgShabby').textContent    = avg(byCategory('shabby'));
+  document.getElementById('avgBadColors').textContent = avg(byCategory('bad-colors'));
+}
+
+function exportResults() {
+  const rows = ['file,category,scoreable,total,color_harmony,outfit_cohesion,intentionality,silhouette,label,vibe_line,whats_working,nudge,human_rating'];
+  results.forEach((r, i) => {
+    if (!r) { rows.push(`${IMAGES[i].file},${IMAGES[i].category},pending,,,,,,,,,`); return; }
+    if (!r.scoreable) { rows.push(`${IMAGES[i].file},${IMAGES[i].category},false,,,,,,,,,${ratings[i] || ''}`); return; }
+    const s = r.scores;
+    const esc = v => `"${(v || '').replace(/"/g, '""')}"`;
+    rows.push([
+      r.file, r.category, 'true',
+      s.total, s.color_harmony, s.outfit_cohesion, s.intentionality, s.silhouette,
+      esc(r.label), esc(r.vibe_line), esc(r.whats_working), esc(r.nudge || ''),
+      ratings[i] || ''
+    ].join(','));
+  });
+
+  document.getElementById('exportText').value = rows.join('\n');
+  document.getElementById('exportOverlay').classList.add('open');
+}
+
+function copyExport() {
+  const ta = document.getElementById('exportText');
+  ta.select();
+  document.execCommand('copy');
+  const btn = event.target;
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+function closeExport() {
+  document.getElementById('exportOverlay').classList.remove('open');
+}
+
+buildGrid();
+</script>
+</body>
+</html>
