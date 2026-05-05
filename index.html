@@ -1386,6 +1386,7 @@ function showScreen(id) {
 function goHome() {
   currentImageBase64 = null;
   currentImagePrompt = null;
+  if (currentLookImageUrl) { URL.revokeObjectURL(currentLookImageUrl); currentLookImageUrl = null; }
   document.getElementById('fileInput').value = '';
   document.getElementById('cameraInput').value = '';
   document.querySelectorAll('.dim-item').forEach(d => d.classList.remove('open'));
@@ -1674,13 +1675,33 @@ function displayResult(result) {
 }
 
 let currentImagePrompt = null;
+let currentLookImageUrl = null; // cached blob URL for the generated look
+
+function promptSeed(str) {
+  // Deterministic seed from prompt string — same prompt always gives same image
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % 99999;
+}
 
 function showNewLook() {
   if (!currentImagePrompt) return;
   const overlay = document.getElementById('newlookOverlay');
   const wrap = document.getElementById('newlookImgWrap');
-
   overlay.classList.add('open');
+
+  // If already generated for this outfit, show cached image instantly
+  if (currentLookImageUrl) {
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = currentLookImageUrl;
+    img.style.cssText = 'width:100%;border-radius:16px;display:block;';
+    wrap.appendChild(img);
+    return;
+  }
+
   generateLookImage(wrap);
 }
 
@@ -1689,7 +1710,7 @@ async function generateLookImage(wrap) {
 
   const negative = encodeURIComponent('duplicate person, two people, multiple figures, artifacts, distorted limbs, cloning, extra arms, blurry, low quality');
   const prompt = encodeURIComponent(currentImagePrompt + ', highly detailed, photorealistic');
-  const seed = Math.floor(Math.random() * 99999);
+  const seed = promptSeed(currentImagePrompt); // deterministic — same prompt = same image
   const url = `https://image.pollinations.ai/prompt/${prompt}?width=512&height=768&model=flux&negative=${negative}&seed=${seed}`;
 
   function showRetry(msg) {
@@ -1718,6 +1739,7 @@ async function generateLookImage(wrap) {
 
     const blob = await res.blob();
     const objUrl = URL.createObjectURL(blob);
+    currentLookImageUrl = objUrl; // cache it
     wrap.innerHTML = '';
     const img = document.createElement('img');
     img.src = objUrl;
