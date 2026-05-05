@@ -1217,7 +1217,7 @@
   <div class="newlook-sheet" id="newlookSheet">
     <div class="newlook-handle"></div>
     <div class="newlook-label">AI Preview</div>
-    <div class="newlook-title" id="newlookTitle">Here's your improved look</div>
+    <div class="newlook-title" id="newlookTitle">You, with the fix applied</div>
     <div class="newlook-img-wrap" id="newlookImgWrap">
       <div class="newlook-loading" id="newlookLoading">
         <div class="newlook-spinner"></div>
@@ -1708,12 +1708,7 @@ function showNewLook() {
 }
 
 async function generateLookImage(wrap) {
-  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Generating your new look...</div></div>';
-
-  const negative = encodeURIComponent('duplicate person, two people, multiple figures, artifacts, distorted limbs, cloning, extra arms, blurry, low quality');
-  const prompt = encodeURIComponent(currentImagePrompt + ', highly detailed, photorealistic');
-  const seed = promptSeed(currentImagePrompt); // deterministic — same prompt = same image
-  const url = `https://image.pollinations.ai/prompt/${prompt}?width=512&height=768&model=flux&negative=${negative}&seed=${seed}`;
+  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Applying changes to your photo...</div></div>';
 
   function showRetry(msg) {
     wrap.innerHTML = `
@@ -1725,23 +1720,29 @@ async function generateLookImage(wrap) {
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 45000);
+    const timeout = setTimeout(() => controller.abort(), 60000);
 
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(WORKER_URL + '/transform', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_base64: currentImageBase64,
+        prompt: currentImagePrompt + ', highly detailed, photorealistic, same person'
+      }),
+      signal: controller.signal
+    });
+
     clearTimeout(timeout);
 
-    if (res.status === 429) {
-      showRetry('Pollinations is busy right now.<br>Wait a few seconds and try again.');
-      return;
-    }
     if (!res.ok) {
-      showRetry(`Generation failed (${res.status}).<br>Try again in a moment.`);
+      const err = await res.json().catch(() => ({}));
+      showRetry(`Generation failed (${res.status}).<br>${err.error || 'Try again in a moment.'}`);
       return;
     }
 
     const blob = await res.blob();
     const objUrl = URL.createObjectURL(blob);
-    currentLookImageUrl = objUrl; // cache it
+    currentLookImageUrl = objUrl;
     wrap.innerHTML = '';
     const img = document.createElement('img');
     img.src = objUrl;
@@ -1750,7 +1751,7 @@ async function generateLookImage(wrap) {
 
   } catch (err) {
     if (err.name === 'AbortError') {
-      showRetry('Taking too long to generate.<br>Pollinations may be busy — try again.');
+      showRetry('Taking too long.<br>Try again in a moment.');
     } else {
       showRetry('Something went wrong.<br>Try again in a moment.');
     }
