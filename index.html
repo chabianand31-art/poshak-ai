@@ -1880,7 +1880,7 @@ function shareScore() {
   const score = document.getElementById('scoreNum').textContent;
   const label = document.getElementById('scoreLabel').textContent;
   const appUrl = 'https://poshakbyai.com';
-  const text = `My outfit scored ${score}/10 ✨\n"${label}"\n\nCheck your fit 👉 ${appUrl}\n\n#PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
+  const text = `My outfit scored ${score}/10 ✨\n"${label}"\n\n#PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
   if (navigator.share) {
     navigator.share({ title: 'PoshakbyAI — drip.check', text, url: appUrl });
   } else {
