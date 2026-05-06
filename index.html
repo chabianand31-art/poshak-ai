@@ -1346,6 +1346,17 @@ SCORING RUBRIC (each out of 25, total out of 100):
 3. intentionality — Effort & Finishing (0-25): Does the look feel intentional and complete? Covers: accessories (shoes, bags, jewellery, belts, watches), grooming visible in photo, whether the outfit looks polished or thrown together. Tips: suggest specific accessories, shoe changes, finishing touches. SHOES ALWAYS GO HERE.
 4. silhouette — Fit & Shape (0-25): Is the fit right on the body? Covers: too baggy, too tight, proportions (cropped top with wide pants etc), whether the silhouette flatters. Tips: suggest fit adjustments or proportion fixes. Do NOT mention shoes here.
 
+GARMENT IDENTIFICATION — do this first before writing anything:
+- Identify the exact garment type correctly. These are NOT interchangeable:
+  - Saree: draped fabric worn with blouse and petticoat
+  - Kurta / Kurti: stitched top garment, worn with pants/salwar/leggings
+  - Salwar Kameez: kurta + salwar (loose pants) set
+  - Co-ord set: matching top + bottom in same fabric/print
+  - Lehenga: flared skirt + blouse + optional dupatta
+  - Sherwani: formal men's coat-like garment
+  - Blazer / Jacket: Western outerwear
+- Use the SAME garment name consistently across label, vibe_line, whats_working, and tips. Do not call it a saree in the label and a kurta in the verdict.
+
 STRICT RULES:
 - Score ONLY if exactly one person is visible with outfit clearly shown
 - If no clear outfit, multiple people, or non-fashion image: set "scoreable": false
@@ -1863,9 +1874,10 @@ function closeNewLook(e) {
 function shareScore() {
   const score = document.getElementById('scoreNum').textContent;
   const label = document.getElementById('scoreLabel').textContent;
-  const text = `My outfit scored ${score}/10 ✨\n"${label}"\n\n#PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
+  const appUrl = 'https://poshakbyai.com';
+  const text = `My outfit scored ${score}/10 ✨\n"${label}"\n\nCheck your fit 👉 ${appUrl}\n\n#PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
   if (navigator.share) {
-    navigator.share({ title: 'drip.check score', text });
+    navigator.share({ title: 'PoshakbyAI — drip.check', text, url: appUrl });
   } else {
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('shareBtn');
