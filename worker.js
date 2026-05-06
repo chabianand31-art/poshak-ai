@@ -20,27 +20,21 @@ export default {
     // ── /transform — img2img: apply outfit changes to the actual uploaded photo ──
     if (url.pathname === '/transform') {
       try {
-        const { image_base64, prompt } = await request.json();
+        const { prompt } = await request.json();
 
-        if (!image_base64 || !prompt) {
-          return new Response(JSON.stringify({ error: 'image_base64 and prompt are required' }), {
+        if (!prompt) {
+          return new Response(JSON.stringify({ error: 'prompt is required' }), {
             status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
-        // Convert base64 string to Uint8Array for Cloudflare AI
-        const binaryStr = atob(image_base64);
-        const imageBytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) {
-          imageBytes[i] = binaryStr.charCodeAt(i);
-        }
-
-        const result = await env.AI.run('@cf/runwayml/stable-diffusion-v1-5-img2img', {
+        const result = await env.AI.run('@cf/bytedance/stable-diffusion-xl-lightning', {
           prompt: prompt,
-          image: [...imageBytes],
-          strength: 0.65,   // how much to change — 0=no change, 1=ignore original
-          num_steps: 20,
-          guidance: 8,
+          negative_prompt: 'text, letters, words, watermark, caption, logo, blurry, distorted, deformed, ugly, low quality, bad anatomy, extra limbs, multiple people, cluttered background',
+          num_steps: 8,
+          guidance: 2.0,
+          width: 768,
+          height: 1024,
         });
 
         // Result is a ReadableStream of PNG bytes — return as image

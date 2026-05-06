@@ -20,6 +20,34 @@
 
   .header-right { display: flex; gap: 10px; align-items: center; }
 
+  /* Per-card score button */
+  .score-trigger {
+    width: 100%; padding: 8px;
+    border-radius: 8px; font-size: 12px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    background: #1A1714; color: #F7F4EF;
+    border: none; cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 8px;
+  }
+  .score-trigger:hover { background: #D85A30; }
+  .score-trigger:disabled { opacity: 0.4; cursor: not-allowed; background: #1A1714; }
+
+  /* Error reason block */
+  .error-reason {
+    display: none;
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #991B1B;
+    line-height: 1.45;
+  }
+  .error-reason.visible { display: block; }
+  .error-reason strong { font-weight: 500; display: block; margin-bottom: 2px; }
+
   .progress-badge {
     font-size: 12px; color: #8C8579;
     background: rgba(255,255,255,0.06);
@@ -174,12 +202,11 @@
 <header>
   <div class="header-left">
     <h1>Poshak AI — Eval</h1>
-    <p>20 images · trendy / dated / shabby / bad-colors</p>
+    <p>60 images · 15 Indian ethnic categories · IndoFashion dataset</p>
   </div>
   <div class="header-right">
-    <div class="progress-badge">Scored: <span id="scoredCount">0</span> / 20</div>
+    <div class="progress-badge">Scored: <span id="scoredCount">0</span> / 60</div>
     <button class="btn btn-outline" onclick="exportResults()">Export CSV</button>
-    <button class="btn btn-primary" id="runAllBtn" onclick="runAll()">Run All</button>
   </div>
 </header>
 
@@ -216,12 +243,15 @@ SCORING RUBRIC (each out of 25, total out of 100):
 3. Effort & Finishing (0-25): Does the look feel put together? Clothes neat, accessories considered?
 4. Fit & Shape (0-25): Is the fit right on the body? Do the proportions work?
 
-STRICT RULES:
-- Score ONLY if exactly one person is visible with outfit clearly shown
-- If no clear outfit, multiple people, or non-fashion image: set "scoreable": false
+STRICT SCOREABLE RULES — check these in order before scoring:
+1. PERSON REQUIRED: A real person must be wearing the outfit. Mannequins, flat lays, product shots on white backgrounds, hangers = scoreable: false, reason: "Product shot — no person wearing the outfit"
+2. FULL OUTFIT REQUIRED: At least half the body must be visible with the outfit context clear. Cropped to just shoes, just a dupatta, just a blouse, just accessories = scoreable: false, reason: "Partial image — need at least half-body shot to score"
+3. SINGLE PERSON ONLY: More than one person = scoreable: false, reason: "Multiple people in frame"
+4. OUTFIT MUST BE VISIBLE: Back turned fully, heavily blurred, extremely dark = scoreable: false, reason: "Outfit not clearly visible"
 - Nudge ONLY if total < 75. One nudge max.
 - Score >= 75: NO nudge at all.
 - Tone: sharp, sassy, warm. Like a fashion editor best friend.
+- ALWAYS provide a specific reason when scoreable is false. Never leave reason empty.
 
 RESPONSE LENGTH:
 - vibe_line: MAX 10 words. One punchy sentence.
@@ -254,26 +284,66 @@ Respond ONLY with valid JSON, no markdown:
 If not scoreable: {"scoreable":false,"reason":"brief reason"}`;
 
 const IMAGES = [
-  { file: 'eval-images/trendy_1.jpg',     category: 'trendy' },
-  { file: 'eval-images/trendy_2.jpg',     category: 'trendy' },
-  { file: 'eval-images/trendy_3.jpg',     category: 'trendy' },
-  { file: 'eval-images/trendy_4.jpg',     category: 'trendy' },
-  { file: 'eval-images/trendy_5.jpg',     category: 'trendy' },
-  { file: 'eval-images/dated_1.jpg',      category: 'dated' },
-  { file: 'eval-images/dated_2.jpg',      category: 'dated' },
-  { file: 'eval-images/dated_3.jpg',      category: 'dated' },
-  { file: 'eval-images/dated_4.jpg',      category: 'dated' },
-  { file: 'eval-images/dated_5.jpg',      category: 'dated' },
-  { file: 'eval-images/shabby_1.jpg',     category: 'shabby' },
-  { file: 'eval-images/shabby_2.jpg',     category: 'shabby' },
-  { file: 'eval-images/shabby_3.jpg',     category: 'shabby' },
-  { file: 'eval-images/shabby_4.jpg',     category: 'shabby' },
-  { file: 'eval-images/shabby_5.jpg',     category: 'shabby' },
-  { file: 'eval-images/bad_colors_1.jpg', category: 'bad-colors' },
-  { file: 'eval-images/bad_colors_2.jpg', category: 'bad-colors' },
-  { file: 'eval-images/bad_colors_3.jpg', category: 'bad-colors' },
-  { file: 'eval-images/bad_colors_4.jpg', category: 'bad-colors' },
-  { file: 'eval-images/bad_colors_5.jpg', category: 'bad-colors' },
+  { file: 'eval-images/blouse_1.jpg', category: 'blouse' },
+  { file: 'eval-images/blouse_2.jpg', category: 'blouse' },
+  { file: 'eval-images/blouse_3.jpg', category: 'blouse' },
+  { file: 'eval-images/blouse_4.jpg', category: 'blouse' },
+  { file: 'eval-images/dhoti_pants_1.jpg', category: 'dhoti_pants' },
+  { file: 'eval-images/dhoti_pants_2.jpg', category: 'dhoti_pants' },
+  { file: 'eval-images/dhoti_pants_3.jpg', category: 'dhoti_pants' },
+  { file: 'eval-images/dhoti_pants_4.jpg', category: 'dhoti_pants' },
+  { file: 'eval-images/dupattas_1.jpg', category: 'dupattas' },
+  { file: 'eval-images/dupattas_2.jpg', category: 'dupattas' },
+  { file: 'eval-images/dupattas_3.jpg', category: 'dupattas' },
+  { file: 'eval-images/dupattas_4.jpg', category: 'dupattas' },
+  { file: 'eval-images/gowns_1.jpg', category: 'gowns' },
+  { file: 'eval-images/gowns_2.jpg', category: 'gowns' },
+  { file: 'eval-images/gowns_3.jpg', category: 'gowns' },
+  { file: 'eval-images/gowns_4.jpg', category: 'gowns' },
+  { file: 'eval-images/kurta_men_1.jpg', category: 'kurta_men' },
+  { file: 'eval-images/kurta_men_2.jpg', category: 'kurta_men' },
+  { file: 'eval-images/kurta_men_3.jpg', category: 'kurta_men' },
+  { file: 'eval-images/kurta_men_4.jpg', category: 'kurta_men' },
+  { file: 'eval-images/leggings_and_salwars_1.jpg', category: 'leggings_and_salwars' },
+  { file: 'eval-images/leggings_and_salwars_2.jpg', category: 'leggings_and_salwars' },
+  { file: 'eval-images/leggings_and_salwars_3.jpg', category: 'leggings_and_salwars' },
+  { file: 'eval-images/leggings_and_salwars_4.jpg', category: 'leggings_and_salwars' },
+  { file: 'eval-images/lehenga_1.jpg', category: 'lehenga' },
+  { file: 'eval-images/lehenga_2.jpg', category: 'lehenga' },
+  { file: 'eval-images/lehenga_3.jpg', category: 'lehenga' },
+  { file: 'eval-images/lehenga_4.jpg', category: 'lehenga' },
+  { file: 'eval-images/mojaris_men_1.jpg', category: 'mojaris_men' },
+  { file: 'eval-images/mojaris_men_2.jpg', category: 'mojaris_men' },
+  { file: 'eval-images/mojaris_men_3.jpg', category: 'mojaris_men' },
+  { file: 'eval-images/mojaris_men_4.jpg', category: 'mojaris_men' },
+  { file: 'eval-images/mojaris_women_1.jpg', category: 'mojaris_women' },
+  { file: 'eval-images/mojaris_women_2.jpg', category: 'mojaris_women' },
+  { file: 'eval-images/mojaris_women_3.jpg', category: 'mojaris_women' },
+  { file: 'eval-images/mojaris_women_4.jpg', category: 'mojaris_women' },
+  { file: 'eval-images/nehru_jackets_1.jpg', category: 'nehru_jackets' },
+  { file: 'eval-images/nehru_jackets_2.jpg', category: 'nehru_jackets' },
+  { file: 'eval-images/nehru_jackets_3.jpg', category: 'nehru_jackets' },
+  { file: 'eval-images/nehru_jackets_4.jpg', category: 'nehru_jackets' },
+  { file: 'eval-images/palazzos_1.jpg', category: 'palazzos' },
+  { file: 'eval-images/palazzos_2.jpg', category: 'palazzos' },
+  { file: 'eval-images/palazzos_3.jpg', category: 'palazzos' },
+  { file: 'eval-images/palazzos_4.jpg', category: 'palazzos' },
+  { file: 'eval-images/petticoats_1.jpg', category: 'petticoats' },
+  { file: 'eval-images/petticoats_2.jpg', category: 'petticoats' },
+  { file: 'eval-images/petticoats_3.jpg', category: 'petticoats' },
+  { file: 'eval-images/petticoats_4.jpg', category: 'petticoats' },
+  { file: 'eval-images/saree_1.jpg', category: 'saree' },
+  { file: 'eval-images/saree_2.jpg', category: 'saree' },
+  { file: 'eval-images/saree_3.jpg', category: 'saree' },
+  { file: 'eval-images/saree_4.jpg', category: 'saree' },
+  { file: 'eval-images/sherwanis_1.jpg', category: 'sherwanis' },
+  { file: 'eval-images/sherwanis_2.jpg', category: 'sherwanis' },
+  { file: 'eval-images/sherwanis_3.jpg', category: 'sherwanis' },
+  { file: 'eval-images/sherwanis_4.jpg', category: 'sherwanis' },
+  { file: 'eval-images/women_kurta_1.jpg', category: 'women_kurta' },
+  { file: 'eval-images/women_kurta_2.jpg', category: 'women_kurta' },
+  { file: 'eval-images/women_kurta_3.jpg', category: 'women_kurta' },
+  { file: 'eval-images/women_kurta_4.jpg', category: 'women_kurta' },
 ];
 
 // State
@@ -299,6 +369,8 @@ function buildGrid() {
           <div class="status-dot" id="dot-${i}"></div>
           <span id="status-text-${i}">Pending</span>
         </div>
+        <button class="score-trigger" id="score-btn-${i}" onclick="scoreImage(${i})">Score this image</button>
+        <div class="error-reason" id="error-reason-${i}"><strong>Why not scored:</strong><span id="error-text-${i}"></span></div>
         <div class="result-block" id="result-${i}">
           <div class="vibe-text" id="vibe-${i}"></div>
           <div class="result-row">
@@ -350,9 +422,11 @@ function setStatus(i, state, text) {
 }
 
 async function imageToBase64(src) {
+  // Fetch as blob first — avoids canvas cross-origin taint on file:// protocol
+  const blob = await fetch(src).then(r => r.blob());
+  const objectUrl = URL.createObjectURL(blob);
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const MAX = 1024;
       let { width: w, height: h } = img;
@@ -363,16 +437,23 @@ async function imageToBase64(src) {
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(objectUrl);
       resolve(canvas.toDataURL('image/jpeg', 0.82).split(',')[1]);
     };
-    img.onerror = reject;
-    img.src = src;
+    img.onerror = (e) => { URL.revokeObjectURL(objectUrl); reject(e); };
+    img.src = objectUrl;
   });
 }
 
 async function scoreImage(i) {
-  setStatus(i, 'running', 'Scoring...');
+  const btn = document.getElementById('score-btn-' + i);
   const card = document.getElementById('card-' + i);
+  const errorBlock = document.getElementById('error-reason-' + i);
+
+  btn.disabled = true;
+  btn.textContent = 'Scoring...';
+  errorBlock.classList.remove('visible');
+  setStatus(i, 'running', 'Scoring...');
   card.style.outline = '2px solid #EF9F27';
 
   try {
@@ -400,18 +481,29 @@ async function scoreImage(i) {
     results[i] = { ...result, category: IMAGES[i].category, file: IMAGES[i].file };
 
     if (!result.scoreable) {
-      setStatus(i, 'error', 'Not scoreable: ' + (result.reason || ''));
+      const reason = result.reason || 'Image does not meet scoring requirements.';
+      setStatus(i, 'error', 'Not scoreable');
+      document.getElementById('error-text-' + i).textContent = ' ' + reason;
+      errorBlock.classList.add('visible');
       card.style.outline = '2px solid #E24B4A';
+      btn.textContent = 'Retry';
+      btn.disabled = false;
+      updateStats();
       return;
     }
 
     displayCard(i, result);
-    setStatus(i, 'done', 'Done');
+    setStatus(i, 'done', 'Scored');
     card.style.outline = '2px solid #639922';
+    btn.style.display = 'none';
 
   } catch (err) {
-    setStatus(i, 'error', 'Error: ' + err.message);
+    setStatus(i, 'error', 'Error');
+    document.getElementById('error-text-' + i).textContent = ' ' + (err.message || 'Unknown error');
+    errorBlock.classList.add('visible');
     card.style.outline = '2px solid #E24B4A';
+    btn.textContent = 'Retry';
+    btn.disabled = false;
     results[i] = { error: err.message, category: IMAGES[i].category, file: IMAGES[i].file };
   }
   updateStats();
@@ -460,28 +552,11 @@ function rate(i, val) {
   });
 }
 
-async function runAll() {
-  const btn = document.getElementById('runAllBtn');
-  btn.disabled = true;
-  btn.textContent = 'Running...';
 
-  for (let i = 0; i < IMAGES.length; i++) {
-    await scoreImage(i);
-    updateScoredCount();
-    await new Promise(r => setTimeout(r, 400)); // small delay between calls
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Run Again';
-}
-
-function updateScoredCount() {
-  const done = results.filter(r => r && r.scoreable).length;
-  document.getElementById('scoredCount').textContent = done;
-}
 
 function updateStats() {
   const scored = results.filter(r => r && r.scoreable);
+  document.getElementById('scoredCount').textContent = scored.length;
   const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length / 10).toFixed(1) : '—';
 
   const byCategory = cat => scored.filter(r => r.category === cat).map(r => r.scores.total);

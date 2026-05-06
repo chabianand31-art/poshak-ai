@@ -171,6 +171,53 @@
     transform: scale(1.01);
   }
 
+  /* ── SHIMMER ── */
+  @keyframes shimmerSweep {
+    0%   { transform: translateX(-100%) skewX(-15deg); }
+    100% { transform: translateX(250%)  skewX(-15deg); }
+  }
+  .upload-zone .shimmer-bar {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 22px;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .upload-zone .shimmer-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+    animation: shimmerSweep 0.9s ease-in-out 0.4s 2;
+  }
+
+  /* ── SILHOUETTE ── */
+  .upload-silhouette {
+    position: absolute;
+    bottom: 0; right: 16px;
+    height: 88%;
+    opacity: 0.055;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ── SAMPLE LINK ── */
+  .sample-link {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 0.6rem;
+    cursor: pointer;
+    background: none; border: none;
+    font-family: 'DM Sans', sans-serif;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+  }
+  .sample-link:hover { color: var(--coral); }
+
   .upload-icon-wrap {
     width: 56px;
     height: 56px;
@@ -415,14 +462,17 @@
     text-shadow: 0 0 40px rgba(216,90,48,0.25);
   }
   .score-label {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 400;
     color: var(--parchment);
-    margin-top: 6px;
+    margin-top: 8px;
     opacity: 0;
     transition: opacity 0.4s;
     font-style: italic;
     font-family: 'Playfair Display', serif;
+    letter-spacing: 0.01em;
+    line-height: 1.3;
+    padding: 0 1rem;
   }
   .share-btn {
     margin-top: 1.25rem;
@@ -528,6 +578,29 @@
   }
   .dim-bar.amber { background: linear-gradient(90deg, #C17A0F, #EF9F27); box-shadow: 0 0 6px rgba(239,159,39,0.3); }
   .dim-bar.red { background: linear-gradient(90deg, #A32D2D, #E24B4A); box-shadow: 0 0 6px rgba(226,75,74,0.3); }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(226,75,74,0.0), inset 0 0 0 1.5px rgba(226,75,74,0.3); }
+    50% { box-shadow: 0 0 12px 3px rgba(226,75,74,0.2), inset 0 0 0 1.5px rgba(226,75,74,0.7); }
+  }
+  .dim-item.lowest-score {
+    border-radius: 10px;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  .dim-item.lowest-score .dim-name::after {
+    content: 'FOCUS HERE';
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #E24B4A;
+    background: rgba(226,75,74,0.1);
+    border: 1px solid rgba(226,75,74,0.3);
+    border-radius: 4px;
+    padding: 1px 5px;
+    vertical-align: middle;
+  }
 
   /* Dropdown tip */
   .dim-dropdown {
@@ -946,13 +1019,34 @@
       </div>
 
       <div class="upload-zone" id="uploadZone">
+        <div class="shimmer-bar"></div>
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
-        <div class="upload-icon-wrap">
+        <!-- Faint body silhouette — shows ideal framing -->
+        <svg class="upload-silhouette" viewBox="0 0 120 320" xmlns="http://www.w3.org/2000/svg" fill="var(--coral)">
+          <!-- head -->
+          <ellipse cx="60" cy="28" rx="18" ry="22"/>
+          <!-- neck -->
+          <rect x="53" y="48" width="14" height="14" rx="4"/>
+          <!-- torso -->
+          <path d="M28 62 Q20 90 22 140 L98 140 Q100 90 92 62 Q76 72 60 72 Q44 72 28 62Z"/>
+          <!-- left arm -->
+          <path d="M22 68 Q6 90 10 148 Q14 152 22 150 Q24 110 32 80Z"/>
+          <!-- right arm -->
+          <path d="M98 68 Q114 90 110 148 Q106 152 98 150 Q96 110 88 80Z"/>
+          <!-- hips -->
+          <path d="M22 140 Q18 162 20 168 L100 168 Q102 162 98 140Z"/>
+          <!-- left leg -->
+          <path d="M20 168 Q14 220 16 300 Q22 306 34 304 Q38 240 50 180 L40 168Z"/>
+          <!-- right leg -->
+          <path d="M100 168 Q106 220 104 300 Q98 306 86 304 Q82 240 70 180 L80 168Z"/>
+        </svg>
+        <div class="upload-icon-wrap" style="position:relative;z-index:2;">
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
         </div>
-        <div class="upload-title">Add your photo here</div>
-        <div class="upload-sub">JPG, PNG, WEBP — click or drag</div>
+        <div class="upload-title" style="position:relative;z-index:2;">Add your photo here</div>
+        <div class="upload-sub" style="position:relative;z-index:2;">Full body · one person · JPG or PNG</div>
       </div>
+      <button class="sample-link" onclick="loadSamplePhoto()">No photo handy? Try a sample →</button>
 
       <div class="divider">
         <div class="divider-line"></div>
@@ -1108,15 +1202,9 @@
             <div class="working-text" id="workingText"></div>
           </div>
 
-          <div class="nudge-block" id="nudgeCard">
-            <div class="nudge-arrow">→</div>
-            <div class="nudge-inner-text">
-              <div class="nudge-label">Fix this one thing</div>
-              <div class="nudge-text" id="nudgeText"></div>
-              <button class="newlook-btn" id="newlookBtn" onclick="showNewLook()" style="display:none;">
-                ✦ See how your new look could come out
-              </button>
-            </div>
+          <div id="nudgeCard" style="display:none;">
+            <div id="nudgeText"></div>
+            <button id="newlookBtn" onclick="showNewLook()" style="display:none;"></button>
           </div>
 
         </div>
@@ -1253,10 +1341,10 @@ function getMediaType(file) {
 const SYSTEM_PROMPT = `You are drip.check — a sharp, witty AI stylist. Score outfit photos on 4 dimensions.
 
 SCORING RUBRIC (each out of 25, total out of 100):
-1. Colour Matching (0-25): Do the colours work together across all pieces?
-2. How Well It Goes Together (0-25): Do the pieces belong together in style and formality?
-3. Effort & Finishing (0-25): Does the look feel put together? Clothes neat, accessories considered?
-4. Fit & Shape (0-25): Is the fit right on the body? Do the proportions work?
+1. colour_harmony — Colour Matching (0-25): Do the colours work together? Covers: colour palette, tone harmony, clashing colours, monochrome done right. Tips: suggest colour pairings, palette changes.
+2. outfit_cohesion — How Well It Goes Together (0-25): Do the pieces belong in the same outfit? Covers: style mixing (formal/casual clash), occasion mismatch, whether pieces share a clear vibe. Tips: suggest swapping pieces to match the vibe.
+3. intentionality — Effort & Finishing (0-25): Does the look feel intentional and complete? Covers: accessories (shoes, bags, jewellery, belts, watches), grooming visible in photo, whether the outfit looks polished or thrown together. Tips: suggest specific accessories, shoe changes, finishing touches. SHOES ALWAYS GO HERE.
+4. silhouette — Fit & Shape (0-25): Is the fit right on the body? Covers: too baggy, too tight, proportions (cropped top with wide pants etc), whether the silhouette flatters. Tips: suggest fit adjustments or proportion fixes. Do NOT mention shoes here.
 
 STRICT RULES:
 - Score ONLY if exactly one person is visible with outfit clearly shown
@@ -1278,16 +1366,10 @@ SCORING CALIBRATION — this is critical:
 - Missing accessories, clashing colours, poor fit = deduct properly. Do not be shy.
 
 RESPONSE LENGTH — THIS IS CRITICAL:
+- label: MAX 6 words. A savage, funny, Instagram-worthy one-liner specific to THIS outfit. Not generic. Make it something they'd screenshot. Use the outfit details — colours, specific items, vibe. Examples of the ENERGY (don't copy these): "main character forgot the plot", "served looks, forgot the brief", "the blazer said yes, the shoes said no", "colour theory? never heard of her", "almost iconic, almost". No hashtags in label. No full stops.
 - vibe_line: MAX 10 words. One punchy sentence. No full stops needed. Witty.
 - whats_working: MAX 15 words. One sentence. Specific, not generic.
 - nudge: MAX 15 words. One sentence. Specific fix only.
-
-SCORE BANDS (total is out of 10):
-9-10: "Killing it. Full stop."
-8-8.9: "Nailed the brief"
-6.5-7.9: "So close — almost there"
-4.5-6.4: "Good bones, needs work"
-0-4.4: "Let's start from scratch"
 
 TONE RULES:
 - Gender neutral always. No "girl", "queen", "king" — just speak to the person.
@@ -1363,10 +1445,10 @@ Respond ONLY with valid JSON, no markdown:
   "nudge": null,
   "image_prompt": null,
   "tips": {
-    "color_harmony": "One specific tip to improve color harmony. Max 15 words.",
-    "outfit_cohesion": "One specific tip to improve outfit cohesion. Max 15 words.",
-    "intentionality": "One specific tip to improve intentionality and finishing. Max 15 words.",
-    "silhouette": "One specific tip to improve silhouette and proportion. Max 15 words."
+    "color_harmony": "Colour tip: suggest a palette change or pairing. Max 15 words.",
+    "outfit_cohesion": "Cohesion tip: suggest swapping a piece to match the vibe/occasion. Max 15 words.",
+    "intentionality": "Finishing tip: suggest accessories, shoes, or a polish detail. Max 15 words. Shoes go here.",
+    "silhouette": "Fit tip: suggest a fit or proportion fix. No shoe mentions here. Max 15 words."
   },
   "fingerprint": []
 }
@@ -1401,6 +1483,18 @@ function goHome() {
   document.getElementById('feedbackForm').style.display = 'block';
   document.getElementById('thankyouState').style.display = 'none';
   showScreen('home');
+}
+
+async function loadSamplePhoto() {
+  const sampleUrl = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?fm=jpg&q=80&w=800';
+  try {
+    const res = await fetch(sampleUrl);
+    const blob = await res.blob();
+    const file = new File([blob], 'sample.jpg', { type: 'image/jpeg' });
+    handleImage(file);
+  } catch {
+    alert('Could not load sample. Check your connection and try again.');
+  }
 }
 
 function handleImage(file) {
@@ -1621,6 +1715,9 @@ function displayResult(result) {
     scoreNumEl.style.color = getScoreColor(val);
   });
 
+  // Mark lowest scoring dimension
+  const lowestIdx = dims.indexOf(Math.min(...dims));
+
   // Reveal dimension rows staggered + animate bar + label
   dims.forEach((dimScore, i) => {
     setTimeout(() => {
@@ -1629,6 +1726,7 @@ function displayResult(result) {
       const barEl = document.getElementById('bar' + i);
       const tipEl = document.getElementById('tiptext' + i);
       dimEl.classList.add('visible');
+      if (i === lowestIdx) dimEl.classList.add('lowest-score');
       if (tipEl && tipTexts[i]) tipEl.textContent = tipTexts[i];
 
       const pillClass = getPillClass(dimScore);
@@ -1726,8 +1824,7 @@ async function generateLookImage(wrap) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        image_base64: currentImageBase64,
-        prompt: currentImagePrompt + ', highly detailed, photorealistic, same person'
+        prompt: currentImagePrompt + ', fashion editorial, highly detailed, photorealistic, studio lighting, clean background'
       }),
       signal: controller.signal
     });
@@ -1736,7 +1833,7 @@ async function generateLookImage(wrap) {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      showRetry(`Generation failed (${res.status}).<br>${err.error || 'Try again in a moment.'}`);
+      showRetry(`Generation failed (${res.status}).<br>${typeof err.error === 'string' ? err.error : 'Try again in a moment.'}`);
       return;
     }
 
@@ -1766,7 +1863,7 @@ function closeNewLook(e) {
 function shareScore() {
   const score = document.getElementById('scoreNum').textContent;
   const label = document.getElementById('scoreLabel').textContent;
-  const text = `I scored ${score}/10 on drip.check — "${label}" 🔥 Check your fit at dripcheck.app`;
+  const text = `My outfit scored ${score}/10 ✨\n"${label}"\n\n#PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
   if (navigator.share) {
     navigator.share({ title: 'drip.check score', text });
   } else {
