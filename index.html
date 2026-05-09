@@ -1339,6 +1339,24 @@
 // ── Replace this with your Cloudflare Worker URL after deploying ──
 const WORKER_URL = 'https://poshak-proxy.chabianand31.workers.dev';
 
+// ── Analytics ──
+const _UID_KEY = 'poshak_uid';
+function _getUID() {
+  let uid = localStorage.getItem(_UID_KEY);
+  if (!uid) { uid = crypto.randomUUID(); localStorage.setItem(_UID_KEY, uid); }
+  return uid;
+}
+function track(event) {
+  try {
+    fetch(WORKER_URL + '/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: _getUID(), event })
+    }).catch(() => {});
+  } catch (_) {}
+}
+track('visit');
+
 let currentImageBase64 = null;
 let currentMediaType = 'image/jpeg';
 
@@ -1679,6 +1697,7 @@ async function startAnalysis() {
     }
 
     displayResult(result);
+    track('score');
 
   } catch (err) {
     stopProcessingAnimation();
