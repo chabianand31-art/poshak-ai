@@ -103,16 +103,19 @@ export default {
           });
         }
 
-        const result = await env.AI.run('@cf/bytedance/stable-diffusion-xl-lightning', {
+        const result = await env.AI.run('@cf/black-forest-labs/flux-1-schnell', {
           prompt: prompt,
-          negative_prompt: 'cartoon, anime, illustration, digital art, painting, drawing, sketch, 3d render, cgi, plastic skin, doll, unrealistic, artificial, text, watermark, logo, blurry, distorted, deformed, bad anatomy, extra limbs, multiple people, dark background',
           num_steps: 8,
-          guidance: 2.5,
           width: 768,
           height: 1024,
         });
 
-        return new Response(result, {
+        // FLUX returns base64 JSON — decode to binary PNG
+        const imageData = result.image
+          ? Uint8Array.from(atob(result.image), c => c.charCodeAt(0))
+          : result;
+
+        return new Response(imageData, {
           headers: {
             ...corsHeaders,
             'Content-Type': 'image/png',
