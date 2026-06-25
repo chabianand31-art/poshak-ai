@@ -1335,9 +1335,8 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
-// ── Replace this with your Cloudflare Worker URL after deploying ──
-const WORKER_URL = 'https://poshak-proxy.chabianand31.workers.dev';
 
 // ── Analytics ──
 const _UID_KEY = 'poshak_uid';
@@ -1348,7 +1347,7 @@ function _getUID() {
 }
 function track(event) {
   try {
-    fetch(WORKER_URL + '/track', {
+    fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.TRACK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uid: _getUID(), event })
@@ -1549,7 +1548,7 @@ function goHome() {
 }
 
 async function loadSamplePhoto() {
-  const sampleUrl = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?fm=jpg&q=80&w=800';
+  const sampleUrl = CONFIG.SAMPLE_IMAGE;
   try {
     const res = await fetch(sampleUrl);
     const blob = await res.blob();
@@ -1649,7 +1648,7 @@ function stopProcessingAnimation() {
 }
 
 async function callGroq(imageBase64, mediaType) {
-  const response = await fetch(WORKER_URL, {
+  const response = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.GROQ_PROXY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -1887,7 +1886,7 @@ async function generateLookImage(wrap) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
 
-    const res = await fetch(WORKER_URL + '/transform', {
+    const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.TRANSFORM, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1930,7 +1929,7 @@ function closeNewLook(e) {
 function shareScore() {
   const score = document.getElementById('scoreNum').textContent;
   const label = document.getElementById('scoreLabel').textContent;
-  const appUrl = 'https://poshakbyai.com';
+  const appUrl = CONFIG.APP_URL;
   const text = `My outfit scored ${score}/10 ✨\n"${label}"\n\n#PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
   if (navigator.share) {
     navigator.share({ title: 'PoshakbyAI — drip.check', text, url: appUrl });
