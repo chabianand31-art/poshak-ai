@@ -111,8 +111,8 @@
   <div class="error" id="errorMsg"></div>
 </div>
 
+<script src="config.js"></script>
 <script>
-const WORKER_URL = 'https://poshak-proxy.chabianand31.workers.dev';
 
 // Auto-fill secret from URL param ?secret=...
 const params = new URLSearchParams(location.search);
@@ -124,7 +124,7 @@ async function load() {
   if (!secret) { document.getElementById('errorMsg').textContent = 'Enter the analytics secret.'; return; }
 
   try {
-    const res = await fetch(`${WORKER_URL}/analytics?secret=${encodeURIComponent(secret)}`);
+    const res = await fetch(`${CONFIG.WORKER_URL}${CONFIG.ENDPOINTS.ANALYTICS}?secret=${encodeURIComponent(secret)}`);
     if (res.status === 401) { document.getElementById('errorMsg').textContent = 'Wrong secret.'; return; }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
