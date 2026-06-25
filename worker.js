@@ -1,14 +1,22 @@
 export default {
   async fetch(request, env) {
 
+    const ALLOWED_ORIGINS = ['https://poshakbyai.com'];
+    const origin = request.headers.get('Origin');
+
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders });
+    }
+
+    // Block requests not coming from an allowed origin
+    if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+      return new Response('Forbidden', { status: 403, headers: corsHeaders });
     }
 
     const url = new URL(request.url);
