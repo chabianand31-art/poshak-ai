@@ -232,8 +232,8 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
-const WORKER_URL = 'https://poshak-proxy.chabianand31.workers.dev';
 
 const SYSTEM_PROMPT = `You are drip.check — a sharp, witty AI stylist. Score outfit photos on 4 dimensions.
 
@@ -458,7 +458,7 @@ async function scoreImage(i) {
 
   try {
     const b64 = await imageToBase64(IMAGES[i].file);
-    const response = await fetch(WORKER_URL, {
+    const response = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.GROQ_PROXY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
