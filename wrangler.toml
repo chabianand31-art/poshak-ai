@@ -1,0 +1,22 @@
+name = "poshak-proxy"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# ── Fill this in ──────────────────────────────────────────────────────────────
+# Find it at: dash.cloudflare.com → (right sidebar) Account ID
+account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Workers AI binding (used for FLUX image generation)
+[ai]
+binding = "AI"
+
+# KV namespace binding (used for analytics)
+# Find the ID at: dash.cloudflare.com → Workers & Pages → KV → your namespace
+[[kv_namespaces]]
+binding = "ANALYTICS"
+id     = "YOUR_KV_NAMESPACE_ID"
+
+# Secrets — set these via CLI, never commit them:
+#   wrangler secret put GROQ_API_KEY
+#   wrangler secret put ANALYTICS_SECRET
