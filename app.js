@@ -1,0 +1,630 @@
+// API endpoints are defined in config.js
+
+// ── Analytics ──
+const _UID_KEY = 'poshak_uid';
+function _getUID() {
+  let uid = localStorage.getItem(_UID_KEY);
+  if (!uid) { uid = crypto.randomUUID(); localStorage.setItem(_UID_KEY, uid); }
+  return uid;
+}
+function track(event) {
+  try {
+    fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.TRACK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: _getUID(), event })
+    }).catch(() => {});
+  } catch (_) {}
+}
+track('visit');
+
+let currentImageBase64 = null;
+let currentMediaType = 'image/jpeg';
+
+function getMediaType(file) {
+  if (file.type && file.type.startsWith('image/')) return file.type;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const map = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg',
+    png: 'image/png', gif: 'image/gif',
+    webp: 'image/webp', bmp: 'image/bmp',
+    tiff: 'image/tiff', tif: 'image/tiff',
+    heic: 'image/heic', heif: 'image/heif',
+    avif: 'image/avif'
+  };
+  return map[ext] || 'image/jpeg';
+}
+
+const SYSTEM_PROMPT = `You are drip.check — a NIFT-trained fashion designer with pro-level knowledge of garment construction, colour theory, and Indian style. You love fashion deeply and genuinely want people to dress better. Score outfit photos on 4 dimensions.
+
+SCORING RUBRIC (each out of 25, total out of 100):
+1. colour_harmony — Colour Matching (0-25): Do the colours work together? Covers: colour palette, tone harmony, clashing colours, monochrome done right. Tips: suggest colour pairings, palette changes.
+2. outfit_cohesion — How Well It Goes Together (0-25): Do the pieces belong in the same outfit? Covers: style mixing (formal/casual clash), occasion mismatch, whether pieces share a clear vibe. Tips: suggest swapping pieces to match the vibe.
+3. intentionality — Effort & Finishing (0-25): Does the look feel intentional and complete? Covers: accessories (shoes, bags, jewellery, belts, watches), grooming visible in photo, whether the outfit looks polished or thrown together. Tips: suggest specific accessories, shoe changes, finishing touches. SHOES ALWAYS GO HERE.
+4. silhouette — Fit & Shape (0-25): Is the fit right on the body? Covers: too baggy, too tight, proportions (cropped top with wide pants etc), whether the silhouette flatters. Tips: suggest fit adjustments or proportion fixes. Do NOT mention shoes here.
+
+GARMENT IDENTIFICATION — do this first before writing anything:
+- Identify the exact garment type correctly. These are NOT interchangeable:
+  - Saree: draped fabric worn with blouse and petticoat
+  - Kurta / Kurti: stitched top garment, worn with pants/salwar/leggings
+  - Salwar Kameez: kurta + salwar (loose pants) set
+  - Co-ord set: matching top + bottom in same fabric/print
+  - Lehenga: flared skirt + blouse + optional dupatta
+  - Sherwani: formal men's coat-like garment
+  - Blazer / Jacket: Western outerwear
+- Use the SAME garment name consistently across label, vibe_line, whats_working, and tips. Do not call it a saree in the label and a kurta in the verdict.
+
+STRICT RULES:
+- Score ONLY if exactly one person is visible with outfit clearly shown
+- If no clear outfit, multiple people, or non-fashion image: set "scoreable": false
+- Nudge ONLY if total < 80. One nudge max.
+- Score >= 80: NO nudge at all.
+- Tone: warm, knowledgeable, genuinely encouraging with a light touch of Indian wit. Like a brilliant NIFT senior who actually wants you to dress well.
+- Be vigilant about accessories — they matter to the score.
+
+SCORING CALIBRATION — this is critical:
+- Be honest, not harsh. But do not inflate scores to be nice.
+- A plain white tee and jeans with no thought = 4-5. Not 7.
+- An average everyday outfit with no clear intention = 5-6.
+- A well put-together outfit with clear colour story and fit = 7-7.5.
+- A genuinely great outfit — intentional, on-trend, well-fitted = 8-8.5.
+- Reserve 9-10 for truly exceptional, editorial-level looks.
+- Most real-world outfits should score between 4.5 and 7. That is the honest range.
+- Do NOT round up to make someone feel good. A 5 is a 5.
+- Missing accessories, clashing colours, poor fit = deduct properly. Do not be shy.
+
+RESPONSE LENGTH — THIS IS CRITICAL:
+- label: MAX 6 words. A clever, warm, Instagram-worthy one-liner specific to THIS outfit — written like a NIFT designer who has seen a thousand outfits and finds this one genuinely interesting. Funny without being mean. Use the outfit details — colours, specific items, vibe. The ENERGY to aim for (don't copy these): "the kurta knows what it's doing", "one belt away from iconic", "colour story? still in chapter one", "the fit is filing a complaint", "dupatta doing all the heavy lifting". No hashtags. No full stops.
+- vibe_line: MAX 10 words. One warm, punchy sentence — the kind a NIFT professor would say while nodding at your look. No full stops needed.
+- whats_working: MAX 15 words. One specific sentence. Call out exactly what element is landing well and why — like a design crit that makes someone feel proud.
+- nudge: MAX 15 words. One specific, actionable fix. Phrase it like a helpful correction from a mentor, not a put-down. Make it immediately doable.
+
+TONE RULES:
+- Gender neutral always. No "girl", "queen", "king" — just speak to the person.
+- Indian English — warm, direct, a little playful. Like a stylish NIFT senior giving honest feedback over chai.
+- Indian humour is allowed and encouraged — warm wordplay, light cultural references (Bollywood, cricket, wedding season, etc.), self-aware wit. NOT sarcasm, NOT roasting, NOT dismissive.
+- Reference Indian clothing naturally when relevant — kurta, co-ord, dupatta, ethnic, fusion — don't force Western references.
+- Tips should sound like a designer giving actionable corrections — specific garment names, specific colour suggestions, specific accessories. No vague advice.
+- Short sentences. No flowery language. Get to the point, but with warmth.
+
+2026 TREND AWARENESS — use this to inform scoring and tips:
+
+COLOURS IN (reward these combinations):
+- Pantone 2026: Cloud Dancer (off-white) — a strong base tone
+- Burnished Lilac, Lava Falls (deep red-brown), Alexandrite (teal), Acacia (muted gold)
+- Coral Red, Forest Moss, Mandarin Orange, Cherry Red, Canary Yellow, Chartreuse
+- Bold saturated tones over pastels — pastels are fading
+
+SILHOUETTES IN (reward):
+- Asymmetric cuts, layered hems, midi-to-maxi hybrids
+- Relaxed draped or off-shoulder necklines cinched at waist
+- Cropped boxy jackets (denim, trench, utility)
+- Structured corsets and longline shapes
+- Gauchos and culotte-inspired silhouettes
+- 1970s retro tailoring influence
+- Oversized fits with intentional proportions
+
+FABRICS & TEXTURES IN (reward):
+- Bouclé, jacquard (florals, geometric, 3D raised patterns), matte velvet
+- Crochet, embroidery, small sequins
+- Natural fibres: linen, cotton blends, soft viscose, lyocell
+- Tactile richness — texture is the point in 2026
+
+ACCESSORIES IN (reward):
+- Statement belts with oversized buckles
+- Bold sculptural jewellery — oversized gemstones, Art Deco shapes
+- Woven leather bags, crescent bags
+- Pointed or square-toe boots/shoes
+- Colourful socks as a deliberate styling choice
+- Vintage revival: satin scarves, pillbox shapes
+
+WHAT'S OUT (flag these gently in tips if spotted):
+- Drop-waist dresses, bubble hems, bodycon silhouettes
+- Ultra-skinny fits, faded denim
+- Coquette aesthetic, dainty minimalist jewellery, micro bags
+- Chunky rounded-toe chelsea boots
+- Polka dots (oversaturated), pastel-only outfits
+
+INDIA-SPECIFIC TRENDS IN (reward):
+- Kurta with sneakers — intentional, not lazy
+- Saree with crop top or structured blouse
+- Jhumkas or bold earrings with streetwear
+- Indo-Western fusion done with clear intention
+- Co-ords with cargo or utility details
+- Comfort-first silhouettes with a strong colour story
+
+IMAGE PROMPT RULES (for image_prompt field):
+- Only populate image_prompt when nudge is not null (score < 80)
+- Write a high-quality Flux image generation prompt for the IMPROVED outfit
+- Describe exactly ONE person, ONE outfit, standing still, facing camera
+- Be very specific: exact clothing items, exact colours, fabric, fit, accessories
+- Do NOT use vague words like "stylish" or "improved" — describe what they're actually wearing
+- Structure: "[man/woman] wearing [specific top], [specific bottom], [specific shoes], [specific accessories], [occasion context], fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
+- CRITICAL: Start with "man" or "woman" based on the gender presentation you see in the photo. Never use "person" — image models default to female if gender is unspecified.
+- MAX 45 words
+- Example (man): "man wearing structured cream linen kurta, tailored charcoal palazzo pants, gold jhumka earrings, white sneakers, daytime casual, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
+- Example (woman): "woman wearing fitted silk co-ord set in rust, statement belt, strappy heels, gold hoops, evening casual, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
+
+PARTIAL BODY DETECTION:
+- "partial_body": true if the image shows only upper body (no legs/feet visible) OR only lower body (no torso visible). false if full body is shown.
+- "shoes_visible": true if shoes/footwear are clearly visible in the image, false if feet/shoes are cut off or not in frame.
+- If shoes_visible is false: THIS IS A HARD RULE — you are FORBIDDEN from mentioning shoes, footwear, loafers, heels, sneakers, socks, sandals, boots, or anything below the ankle in ANY field whatsoever — not in tips, nudge, whats_working, vibe_line, or label. You cannot see them so you cannot comment on them. Suggest only visible accessories (jewellery, bag, belt, watch, dupatta, stole).
+- If partial_body is true: be harsh. HARD CAPS — silhouette MAX 10/25, intentionality MAX 13/25. You cannot assess the full look without seeing the whole body. Total score MUST be below 6.5 for partial images — no exceptions. In the nudge field always say something like "Upload a full-body shot for a proper score." Do not reward a partial image with a high score no matter how good the visible portion looks.
+
+CHAIN OF THOUGHT — fill "observation" FIRST before any scores:
+- List every visible element: exact garment names, colours, fit, accessories, shoes (only if visible), occasion context
+- Your scores, tips, and suggestions must be 100% consistent with your observation
+- If something is not in your observation, it does not exist — do not mention it anywhere else in the response
+
+Respond ONLY with valid JSON, no markdown:
+{
+  "scoreable": true,
+  "partial_body": false,
+  "shoes_visible": true,
+  "observation": "Describe exactly what you see: garments, colours, fit, accessories, shoes if visible, inferred occasion. Be specific. This locks in what you can and cannot comment on.",
+  "scores": { "color_harmony": 0, "outfit_cohesion": 0, "intentionality": 0, "silhouette": 0, "total": 0 },
+  "label": "",
+  "vibe_line": "",
+  "whats_working": "",
+  "nudge": null,
+  "image_prompt": null,
+  "tips": {
+    "color_harmony": "Colour tip: like a NIFT colour theory class — name the specific palette fix or pairing. Max 15 words.",
+    "outfit_cohesion": "Cohesion tip: name the exact piece that's breaking the vibe and suggest what to swap it with. Max 15 words.",
+    "intentionality": "Finishing tip: name a specific accessory or detail to add. Only reference items visible in observation. Max 15 words.",
+    "silhouette": "Fit tip: name the specific proportion or fit issue and how to correct it. Only reference items visible in observation. Max 15 words."
+  },
+  "fingerprint": []
+}
+
+If not scoreable: { "scoreable": false, "reason": "brief reason" }`;
+
+const processingMessages = [
+  ["Checking your outfit...", "Give us a second, we're looking at everything"],
+  ["Reading the colours...", "Seeing how your palette is working together"],
+  ["Checking how it all fits...", "Do these pieces belong together?"],
+  ["Almost done...", "Putting your score together"]
+];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function goHome() {
+  currentImageBase64 = null;
+  currentImagePrompt = null;
+  if (currentLookImageUrl) { URL.revokeObjectURL(currentLookImageUrl); currentLookImageUrl = null; }
+  document.getElementById('fileInput').value = '';
+  document.getElementById('cameraInput').value = '';
+  document.querySelectorAll('.dim-item').forEach(d => d.classList.remove('open'));
+  // Reset feedback form
+  selectedRating = 0;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  const ta = document.getElementById('fbTextarea');
+  if (ta) ta.value = '';
+  document.getElementById('feedbackForm').style.display = 'block';
+  document.getElementById('thankyouState').style.display = 'none';
+  showScreen('home');
+}
+
+async function loadSamplePhoto() {
+  const sampleUrl = CONFIG.SAMPLE_IMAGE;
+  try {
+    const res = await fetch(sampleUrl);
+    const blob = await res.blob();
+    const file = new File([blob], 'sample.jpg', { type: 'image/jpeg' });
+    handleImage(file);
+  } catch {
+    alert('Could not load sample. Check your connection and try again.');
+  }
+}
+
+function handleImage(file) {
+  if (!file) return;
+
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const isHeic = ext === 'heic' || ext === 'heif' ||
+    file.type === 'image/heic' || file.type === 'image/heif';
+
+  if (isHeic) {
+    document.getElementById('errorTitle').textContent = 'HEIC photos aren\'t supported yet.';
+    document.getElementById('errorSub').textContent = 'On your iPhone, open the photo → tap Share → Save as JPG, then upload that.';
+    showScreen('error');
+    return;
+  }
+
+  currentMediaType = 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      // Resize to max 1024px — keeps quality, cuts payload ~10x
+      const MAX = 1024;
+      let { width: w, height: h } = img;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else        { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.82);
+      currentImageBase64 = compressed.split(',')[1];
+      const imgEl = document.getElementById('previewImg');
+      imgEl.onerror = () => { imgEl.src = ''; imgEl.style.background = '#2C2C2A'; };
+      imgEl.src = compressed;
+      showScreen('preview');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// File input
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  handleImage(e.target.files[0]);
+});
+
+// Camera input
+document.getElementById('cameraInput').addEventListener('change', (e) => {
+  handleImage(e.target.files[0]);
+});
+
+// Upload zone click
+document.getElementById('uploadZone').addEventListener('click', () => {
+  document.getElementById('fileInput').click();
+});
+
+// Drag and drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  handleImage(e.dataTransfer.files[0]);
+});
+
+// Processing animation
+let processingInterval = null;
+function startProcessingAnimation() {
+  let step = 0;
+  const dots = document.querySelectorAll('.step-dot');
+
+  dots.forEach(d => d.classList.remove('lit'));
+  dots[0].classList.add('lit');
+
+  processingInterval = setInterval(() => {
+    step = (step + 1) % processingMessages.length;
+    document.getElementById('processingTitle').textContent = processingMessages[step][0];
+    document.getElementById('processingSub').textContent = processingMessages[step][1];
+    dots.forEach(d => d.classList.remove('lit'));
+    for (let i = 0; i <= step; i++) dots[i].classList.add('lit');
+  }, 1800);
+}
+
+function stopProcessingAnimation() {
+  clearInterval(processingInterval);
+}
+
+async function callGroq(imageBase64, mediaType) {
+  const response = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.GROQ_PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      max_tokens: 1000,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: [
+          { type: 'image_url', image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
+          { type: 'text', text: 'Score this outfit.' }
+        ]}
+      ]
+    })
+  });
+  const data = await response.json();
+  return { response, data };
+}
+
+async function startAnalysis() {
+  if (!currentImageBase64) return;
+  showScreen('processing');
+  startProcessingAnimation();
+
+  try {
+    const { response, data } = await callGroq(currentImageBase64, currentMediaType);
+
+    stopProcessingAnimation();
+
+    if (!response.ok) {
+      const msg = data.error?.message || `API error ${response.status}`;
+      if (response.status === 401) { localStorage.removeItem('dc_api_key'); showKeyModal(); return; }
+      throw new Error(msg);
+    }
+
+    const rawText = data.choices?.[0]?.message?.content || '';
+    if (!rawText) throw new Error('Empty response. Try again.');
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    if (!result.scoreable) {
+      document.getElementById('errorTitle').textContent = "Hmm, we can't score this.";
+      document.getElementById('errorSub').textContent = result.reason || "We need a clear, full look at your outfit.";
+      showScreen('error');
+      return;
+    }
+
+    displayResult(result);
+    track('score');
+
+  } catch (err) {
+    stopProcessingAnimation();
+    document.getElementById('errorTitle').textContent = "Something went wrong.";
+    document.getElementById('errorSub').textContent = err.message || "Couldn't analyze your photo. Please try again.";
+    showScreen('error');
+    console.error('Gemini error:', err);
+  }
+}
+
+function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+function animateNumber(el, from, to, duration, onUpdate) {
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const val = Math.round((from + (to - from) * easeOut(t)) * 10) / 10;
+    el.textContent = val.toFixed(1);
+    if (onUpdate) onUpdate(val, t);
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function getScoreColor(score) {
+  if (score >= 7.5) return 'var(--coral)';
+  if (score >= 5) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function getPillClass(score) {
+  const pct = (score / 25) * 100;
+  if (pct >= 75) return '';
+  if (pct >= 50) return 'amber';
+  return 'red';
+}
+
+function displayResult(result) {
+  showScreen('result');
+
+  const { scores, label, vibe_line, whats_working, nudge, tips, image_prompt, partial_body, shoes_visible } = result;
+  currentImagePrompt = image_prompt || null;
+  const total = scores.total;
+
+  // Show partial body notice if applicable
+  const partialNotice = document.getElementById('partialBodyNotice');
+  partialNotice.style.display = partial_body ? 'flex' : 'none';
+  const dims = [scores.color_harmony, scores.outfit_cohesion, scores.intentionality, scores.silhouette];
+  const tipTexts = tips ? [
+    tips.color_harmony,
+    tips.outfit_cohesion,
+    tips.intentionality,
+    tips.silhouette
+  ] : ['', '', '', ''];
+
+  // Reset
+  const scoreNumEl = document.getElementById('scoreNum');
+  const scoreLabelEl = document.getElementById('scoreLabel');
+  const shareBtn = document.getElementById('shareBtn');
+  scoreNumEl.textContent = '0';
+  scoreNumEl.style.color = getScoreColor(0);
+  scoreLabelEl.style.opacity = '0';
+  shareBtn.classList.remove('visible');
+
+  document.getElementById('feedbackSection').classList.remove('visible');
+  document.getElementById('nudgeCard').style.display = 'none';
+  document.getElementById('vibeCard').classList.remove('amber');
+
+  // Reset dim items
+  for (let i = 0; i < 4; i++) {
+    const dimEl = document.getElementById('dim' + i);
+    const valEl = document.getElementById('val' + i);
+    const barEl = document.getElementById('bar' + i);
+    dimEl.classList.remove('visible');
+    valEl.textContent = '0.0/10';
+    valEl.className = 'dim-score-label';
+    barEl.style.width = '0%';
+    barEl.className = 'dim-bar';
+  }
+
+  // Animate total score
+  animateNumber(scoreNumEl, 0, total / 10, 1300, (val) => {
+    scoreNumEl.style.color = getScoreColor(val);
+  });
+
+  // Mark lowest scoring dimension
+  const lowestIdx = dims.indexOf(Math.min(...dims));
+
+  // Reveal dimension rows staggered + animate bar + label
+  dims.forEach((dimScore, i) => {
+    setTimeout(() => {
+      const dimEl = document.getElementById('dim' + i);
+      const valEl = document.getElementById('val' + i);
+      const barEl = document.getElementById('bar' + i);
+      const tipEl = document.getElementById('tiptext' + i);
+      dimEl.classList.add('visible');
+      if (i === lowestIdx) dimEl.classList.add('lowest-score');
+      if (tipEl && tipTexts[i]) tipEl.textContent = tipTexts[i];
+
+      const pillClass = getPillClass(dimScore);
+      valEl.className = 'dim-score-label' + (pillClass ? ' ' + pillClass : '');
+      barEl.className = 'dim-bar' + (pillClass ? ' ' + pillClass : '');
+
+      const startTime = performance.now();
+      function tick(now) {
+        const t = Math.min((now - startTime) / 700, 1);
+        const val = Math.round(dimScore * easeOut(t));
+        const pct = Math.round((val / 25) * 100);
+        valEl.textContent = (val / 25 * 10).toFixed(1) + '/10';
+        barEl.style.width = pct + '%';
+        if (t < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }, 500 + i * 180);
+  });
+
+  // Label + share
+  setTimeout(() => {
+    scoreLabelEl.textContent = label;
+    scoreLabelEl.style.opacity = '1';
+    shareBtn.classList.add('visible');
+  }, 1400);
+
+  // Feedback content
+  document.getElementById('vibeText').textContent = vibe_line;
+  if (total < 80) document.getElementById('vibeCard').classList.add('amber');
+  document.getElementById('workingText').textContent = whats_working;
+
+  const nudgeCard = document.getElementById('nudgeCard');
+  const shoeWords = /\b(shoes?|footwear|loafers?|heels?|sneakers?|socks?|sandals?|boots?|flats?|pumps?|stilettos?)\b/i;
+  const safeNudge = (shoes_visible === false && nudge && shoeWords.test(nudge)) ? null : nudge;
+  if (safeNudge && total < 80) {
+    nudgeCard.style.display = 'flex';
+    document.getElementById('nudgeText').textContent = safeNudge;
+  } else {
+    nudgeCard.style.display = 'none';
+  }
+
+  setTimeout(() => {
+    document.getElementById('feedbackSection').classList.add('visible');
+  }, 1800);
+}
+
+let currentImagePrompt = null;
+let currentLookImageUrl = null; // cached blob URL for the generated look
+
+function promptSeed(str) {
+  // Deterministic seed from prompt string — same prompt always gives same image
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % 99999;
+}
+
+function showNewLook() {
+  if (!currentImagePrompt) return;
+  const overlay = document.getElementById('newlookOverlay');
+  const wrap = document.getElementById('newlookImgWrap');
+  overlay.classList.add('open');
+
+  // If already generated for this outfit, show cached image instantly
+  if (currentLookImageUrl) {
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = currentLookImageUrl;
+    img.style.cssText = 'width:100%;border-radius:16px;display:block;';
+    wrap.appendChild(img);
+    return;
+  }
+
+  generateLookImage(wrap);
+}
+
+async function generateLookImage(wrap) {
+  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Applying changes to your photo...</div></div>';
+
+  function showRetry(msg) {
+    wrap.innerHTML = `
+      <div style="padding:2rem;text-align:center;">
+        <div style="font-size:13px;color:#8C8579;line-height:1.6;margin-bottom:1rem;">${msg}</div>
+        <button onclick="generateLookImage(document.getElementById('newlookImgWrap'))" style="padding:8px 20px;border-radius:8px;background:#D85A30;color:#fff;border:none;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Try again</button>
+      </div>`;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
+    const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.TRANSFORM, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: currentImagePrompt + ', fashion editorial, highly detailed, photorealistic, studio lighting, clean background'
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showRetry(`Generation failed (${res.status}).<br>${typeof err.error === 'string' ? err.error : 'Try again in a moment.'}`);
+      return;
+    }
+
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    currentLookImageUrl = objUrl;
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = objUrl;
+    img.style.cssText = 'width:100%;border-radius:16px;display:block;';
+    wrap.appendChild(img);
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      showRetry('Taking too long.<br>Try again in a moment.');
+    } else {
+      showRetry('Something went wrong.<br>Try again in a moment.');
+    }
+  }
+}
+
+function closeNewLook(e) {
+  if (e && e.target !== document.getElementById('newlookOverlay')) return;
+  document.getElementById('newlookOverlay').classList.remove('open');
+}
+
+function shareScore() {
+  const score = document.getElementById('scoreNum').textContent;
+  const label = document.getElementById('scoreLabel').textContent;
+  const appUrl = CONFIG.APP_URL;
+  const text = `My outfit scored ${score}/10 ✨\n"${label}"\n\n#PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
+  if (navigator.share) {
+    navigator.share({ title: 'PoshakbyAI — drip.check', text, url: appUrl });
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('shareBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Share', 2000);
+    });
+  }
+}
+
+function toggleDim(el) {
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.dim-item').forEach(d => d.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+
+let selectedRating = 0;
+
+function selectEmoji(btn, val) {
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedRating = val;
+}
+
+function toggleChip(chip) {
+  chip.classList.toggle('selected');
+}
+
+function submitFeedback() {
+  document.getElementById('feedbackForm').style.display = 'none';
+  document.getElementById('thankyouState').style.display = 'block';
+}
+
+
