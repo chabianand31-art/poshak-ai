@@ -969,6 +969,21 @@
   }
   .newlook-btn:hover { opacity: 0.7; }
 
+  /* Try-on button inside dim tip dropdowns */
+  .tryon-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 10px;
+    font-size: 11px; font-weight: 500;
+    color: var(--coral-dark);
+    background: var(--coral-light); border: 1px solid var(--coral-mid);
+    border-radius: 20px; padding: 5px 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s, opacity 0.15s;
+    letter-spacing: 0.01em;
+  }
+  .tryon-btn:hover { background: var(--coral-mid); }
+
   /* Thank you state */
   .thankyou-wrap { text-align: center; padding: 2rem 0; }
   .thankyou-icon { font-size: 48px; margin-bottom: 1rem; }
@@ -978,6 +993,80 @@
     margin-bottom: 0.5rem;
   }
   .thankyou-sub { font-size: 14px; color: var(--muted); margin-bottom: 2rem; line-height: 1.6; }
+
+  /* ── SCORE GRADE BADGE ── */
+  .score-grade {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-top: 8px;
+    border: 1px solid;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .score-grade.visible { opacity: 1; }
+  .score-grade.fire   { color: #FF7B52; background: rgba(216,90,48,0.15); border-color: rgba(216,90,48,0.3); }
+  .score-grade.solid  { color: #C9933A; background: rgba(239,159,39,0.12); border-color: rgba(239,159,39,0.3); }
+  .score-grade.decent { color: rgba(247,244,239,0.65); background: rgba(247,244,239,0.06); border-color: rgba(247,244,239,0.15); }
+  .score-grade.low    { color: #E07070; background: rgba(226,75,74,0.1); border-color: rgba(226,75,74,0.25); }
+
+  /* ── CONFETTI ── */
+  @keyframes confettiFall {
+    0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ── HISTORY ── */
+  .history-section { width: 100%; margin-bottom: 1.1rem; }
+  .history-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+  }
+  .history-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .history-scroll::-webkit-scrollbar { display: none; }
+  .history-card {
+    flex-shrink: 0;
+    width: 72px;
+    cursor: default;
+  }
+  .history-thumb {
+    width: 72px; height: 72px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--parchment-dark);
+    border: 1px solid rgba(26,23,20,0.07);
+  }
+  .history-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .history-hscore {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--coral);
+    text-align: center;
+    margin-top: 4px;
+  }
+  .history-time {
+    font-size: 9px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 1px;
+  }
 </style>
 </head>
 <body>
@@ -1018,6 +1107,11 @@
         <p class="home-sub">Upload your look. Get a real score. No filter, no flattery.</p>
       </div>
 
+      <div class="history-section" id="historySec" style="display:none;">
+        <div class="history-label">Recent scores</div>
+        <div class="history-scroll" id="historyScroll"></div>
+      </div>
+
       <div class="upload-zone" id="uploadZone">
         <div class="shimmer-bar"></div>
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
@@ -1044,7 +1138,7 @@
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
         </div>
         <div class="upload-title" style="position:relative;z-index:2;">Add your photo here</div>
-        <div class="upload-sub" style="position:relative;z-index:2;">Full body · one person · JPG or PNG</div>
+        <div class="upload-sub" style="position:relative;z-index:2;">Full body · one person · JPG, PNG or WebP</div>
       </div>
       <button class="sample-link" onclick="loadSamplePhoto()">No photo handy? Try a sample →</button>
 
@@ -1120,6 +1214,7 @@
             <div style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:300;color:rgba(247,244,239,0.4);padding-bottom:14px;letter-spacing:0;">/10</div>
           </div>
           <div class="score-label" id="scoreLabel">—</div>
+          <div><div class="score-grade" id="scoreGrade"></div></div>
           <div><button class="share-btn" id="shareBtn" onclick="shareScore()">Share my score</button></div>
         </div>
 
@@ -1335,9 +1430,21 @@
   </div>
 </div>
 
+<!-- ACCESSORY TRY-ON MODAL -->
+<div class="newlook-overlay" id="accessoryOverlay" onclick="closeAccessoryOverlay(event)">
+  <div class="newlook-sheet">
+    <div class="newlook-handle"></div>
+    <div class="newlook-label">Try it on</div>
+    <div class="newlook-title" id="accessoryOverlayTitle">How it could look</div>
+    <div class="newlook-img-wrap" id="accessoryImgWrap"></div>
+    <div class="newlook-disclaimer">AI-generated preview — your original photo with the item added. Results may vary.</div>
+    <button class="newlook-close" onclick="closeAccessoryOverlay()">Close</button>
+  </div>
+</div>
+
 <script>
 // ── Replace this with your Cloudflare Worker URL after deploying ──
-const WORKER_URL = 'https://poshak-proxy.chabianand31.workers.dev';
+const WORKER_URL = 'https://poshak-ai.chabianand31.workers.dev';
 
 // ── Analytics ──
 const _UID_KEY = 'poshak_uid';
@@ -1356,6 +1463,58 @@ function track(event) {
   } catch (_) {}
 }
 track('visit');
+
+// ── History ──
+const HISTORY_KEY = 'poshak_history';
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
+}
+function saveToHistory(entry) {
+  const hist = getHistory();
+  hist.unshift(entry);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(hist.slice(0, 5)));
+}
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+function renderHistory() {
+  const hist = getHistory();
+  const sec = document.getElementById('historySec');
+  const scroll = document.getElementById('historyScroll');
+  if (!hist.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  scroll.innerHTML = hist.map(e => `
+    <div class="history-card">
+      <div class="history-thumb"><img src="${e.thumb}" alt=""></div>
+      <div class="history-hscore">${e.score.toFixed(1)}</div>
+      <div class="history-time">${timeAgo(e.ts)}</div>
+    </div>`).join('');
+}
+renderHistory();
+
+// ── Confetti ──
+function launchConfetti() {
+  const colors = ['#D85A30','#EF9F27','#F7F4EF','#C84B23','#FAECE7','#E8744A'];
+  for (let i = 0; i < 70; i++) {
+    const el = document.createElement('div');
+    const size = Math.random() * 7 + 4;
+    el.style.cssText = [
+      'position:fixed', 'pointer-events:none', 'z-index:9999',
+      `left:${Math.random() * 100}vw`,
+      `top:-20px`,
+      `width:${size}px`, `height:${size * (Math.random() > 0.5 ? 1 : 2.5)}px`,
+      `border-radius:${Math.random() > 0.5 ? '50%' : '2px'}`,
+      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
+      `animation:confettiFall ${1.8 + Math.random() * 2.2}s ${Math.random() * 1}s linear forwards`
+    ].join(';');
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
 
 let currentImageBase64 = null;
 let currentMediaType = 'image/jpeg';
@@ -1545,13 +1704,20 @@ function goHome() {
   if (ta) ta.value = '';
   document.getElementById('feedbackForm').style.display = 'block';
   document.getElementById('thankyouState').style.display = 'none';
+  renderHistory();
   showScreen('home');
 }
 
+const SAMPLE_PHOTOS = [
+  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?fm=jpg&q=80&w=800',
+  'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?fm=jpg&q=80&w=800',
+  'https://images.unsplash.com/photo-1496747611176-843222e1e57c?fm=jpg&q=80&w=800',
+  'https://images.unsplash.com/photo-1509631179647-0177331693ae?fm=jpg&q=80&w=800',
+];
 async function loadSamplePhoto() {
-  const sampleUrl = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?fm=jpg&q=80&w=800';
+  const url = SAMPLE_PHOTOS[Math.floor(Math.random() * SAMPLE_PHOTOS.length)];
   try {
-    const res = await fetch(sampleUrl);
+    const res = await fetch(url);
     const blob = await res.blob();
     const file = new File([blob], 'sample.jpg', { type: 'image/jpeg' });
     handleImage(file);
@@ -1626,6 +1792,21 @@ zone.addEventListener('drop', (e) => {
   handleImage(e.dataTransfer.files[0]);
 });
 
+// Paste-to-upload
+document.addEventListener('paste', (e) => {
+  const screen = document.querySelector('.screen.active');
+  if (!screen || (screen.id !== 'screen-home' && screen.id !== 'screen-preview')) return;
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      handleImage(item.getAsFile());
+      break;
+    }
+  }
+});
+
 // Processing animation
 let processingInterval = null;
 function startProcessingAnimation() {
@@ -1698,6 +1879,22 @@ async function startAnalysis() {
 
     displayResult(result);
     track('score');
+    // Save thumbnail to history (reuse already-compressed image)
+    try {
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = thumbCanvas.height = 80;
+      const tctx = thumbCanvas.getContext('2d');
+      const timg = new Image();
+      timg.onload = () => {
+        const ar = timg.naturalWidth / timg.naturalHeight;
+        let sw, sh, sx = 0, sy = 0;
+        if (ar > 1) { sh = timg.naturalHeight; sw = sh; sx = (timg.naturalWidth - sw) / 2; }
+        else { sw = timg.naturalWidth; sh = sw; sy = (timg.naturalHeight - sh) / 2; }
+        tctx.drawImage(timg, sx, sy, sw, sh, 0, 0, 80, 80);
+        saveToHistory({ score: result.scores.total / 10, label: result.label, ts: Date.now(), thumb: thumbCanvas.toDataURL('image/jpeg', 0.5) });
+      };
+      timg.src = 'data:image/jpeg;base64,' + currentImageBase64;
+    } catch (_) {}
 
   } catch (err) {
     stopProcessingAnimation();
@@ -1761,6 +1958,7 @@ function displayResult(result) {
   scoreNumEl.style.color = getScoreColor(0);
   scoreLabelEl.style.opacity = '0';
   shareBtn.classList.remove('visible');
+  document.getElementById('scoreGrade').className = 'score-grade';
 
   document.getElementById('feedbackSection').classList.remove('visible');
   document.getElementById('nudgeCard').style.display = 'none';
@@ -1814,11 +2012,34 @@ function displayResult(result) {
     }, 500 + i * 180);
   });
 
-  // Label + share
+  // Wire accessory try-on buttons after tip texts are set
+  if (tips) {
+    // Clear previous cache when a new result loads
+    Object.keys(accessoryImageCache).forEach(k => {
+      URL.revokeObjectURL(accessoryImageCache[k]);
+      delete accessoryImageCache[k];
+    });
+    setTimeout(() => wireAccessoryButtons(tips, shoes_visible), 600);
+  }
+
+  // Label + grade badge + share
+  const gradeEl = document.getElementById('scoreGrade');
+  gradeEl.className = 'score-grade';
   setTimeout(() => {
     scoreLabelEl.textContent = label;
     scoreLabelEl.style.opacity = '1';
     shareBtn.classList.add('visible');
+    // Grade badge
+    const s = total / 10;
+    let gradeText, gradeCls;
+    if (s >= 8.5) { gradeText = '🔥 Fire'; gradeCls = 'fire'; }
+    else if (s >= 7.5) { gradeText = '✓ Solid'; gradeCls = 'solid'; }
+    else if (s >= 6.0) { gradeText = '~ Decent'; gradeCls = 'decent'; }
+    else { gradeText = '↑ Needs Work'; gradeCls = 'low'; }
+    gradeEl.textContent = gradeText;
+    gradeEl.className = 'score-grade ' + gradeCls + ' visible';
+    // Confetti for high scores
+    if (s >= 8.0) launchConfetti();
   }, 1400);
 
   // Feedback content
@@ -1829,9 +2050,20 @@ function displayResult(result) {
   const nudgeCard = document.getElementById('nudgeCard');
   const shoeWords = /\b(shoes?|footwear|loafers?|heels?|sneakers?|socks?|sandals?|boots?|flats?|pumps?|stilettos?)\b/i;
   const safeNudge = (shoes_visible === false && nudge && shoeWords.test(nudge)) ? null : nudge;
+  // Remove any previously injected "see new look" button
+  const prevBtn = nudgeCard.querySelector('.newlook-btn');
+  if (prevBtn) prevBtn.remove();
   if (safeNudge && total < 80) {
     nudgeCard.style.display = 'flex';
     document.getElementById('nudgeText').textContent = safeNudge;
+    // Wire "See your new look" button if image prompt is available
+    if (currentImagePrompt) {
+      const nlBtn = document.createElement('button');
+      nlBtn.className = 'newlook-btn';
+      nlBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> See your new look →';
+      nlBtn.onclick = showNewLook;
+      nudgeCard.querySelector('.nudge-inner-text').appendChild(nlBtn);
+    }
   } else {
     nudgeCard.style.display = 'none';
   }
@@ -1927,6 +2159,116 @@ function closeNewLook(e) {
   document.getElementById('newlookOverlay').classList.remove('open');
 }
 
+// ── Accessory try-on ──
+
+const ACCESSORY_RE = /\b(earring|jhumka|jhumki|hoop|stud|clutch|bag|handbag|tote|sling[- ]?bag|belt|buckle|watch|necklace|chain|pendant|choker|bracelet|bangle|scarf|dupatta|stole|sunglasses|shades|brooch|cuff|anklet|hair\s*clip|headband|scrunchie)\b/i;
+
+// Cache accessory images per tip index so we don't regenerate on re-open
+const accessoryImageCache = {};
+
+function wireAccessoryButtons(tips, shoes_visible) {
+  // tips = { color_harmony, outfit_cohesion, intentionality, silhouette }
+  const tipArr = [tips.color_harmony, tips.outfit_cohesion, tips.intentionality, tips.silhouette];
+  tipArr.forEach((tipText, i) => {
+    if (!tipText) return;
+    const match = ACCESSORY_RE.exec(tipText);
+    if (!match) return;
+
+    const accessoryLabel = match[0].toLowerCase();
+    const tipEl = document.getElementById('tiptext' + i);
+    if (!tipEl) return;
+
+    // Remove any previous try-on button
+    const prev = tipEl.parentNode.querySelector('.tryon-btn');
+    if (prev) prev.remove();
+
+    const btn = document.createElement('button');
+    btn.className = 'tryon-btn';
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg> See it on you`;
+    btn.onclick = (e) => {
+      e.stopPropagation(); // don't toggle the dim accordion
+      showAccessoryTryOn(tipText, accessoryLabel, i);
+    };
+
+    tipEl.parentNode.appendChild(btn);
+  });
+}
+
+function showAccessoryTryOn(tipText, accessoryLabel, cacheKey) {
+  const overlay = document.getElementById('accessoryOverlay');
+  const wrap = document.getElementById('accessoryImgWrap');
+  document.getElementById('accessoryOverlayTitle').textContent = 'How it could look with ' + accessoryLabel;
+  overlay.classList.add('open');
+
+  if (accessoryImageCache[cacheKey]) {
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = accessoryImageCache[cacheKey];
+    img.style.cssText = 'width:100%;border-radius:16px;display:block;';
+    wrap.appendChild(img);
+    return;
+  }
+
+  generateAccessoryImage(wrap, tipText, cacheKey);
+}
+
+async function generateAccessoryImage(wrap, tipText, cacheKey) {
+  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Adding item to your photo...</div></div>';
+
+  function showRetry(msg) {
+    wrap.innerHTML = `
+      <div style="padding:2rem;text-align:center;">
+        <div style="font-size:13px;color:#8C8579;line-height:1.6;margin-bottom:1rem;">${msg}</div>
+        <button onclick="generateAccessoryImage(document.getElementById('accessoryImgWrap'),${JSON.stringify(tipText)},${JSON.stringify(cacheKey)})" style="padding:8px 20px;border-radius:8px;background:#D85A30;color:#fff;border:none;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Try again</button>
+      </div>`;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
+    // Build an accessory-focused prompt using the tip text as context
+    const prompt = 'same person, same outfit, same pose, ' + tipText;
+
+    const res = await fetch(WORKER_URL + '/accessory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: currentImageBase64, prompt }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showRetry(`Preview failed (${res.status}).<br>${typeof err.error === 'string' ? err.error : 'Try again in a moment.'}`);
+      return;
+    }
+
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    accessoryImageCache[cacheKey] = objUrl;
+
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = objUrl;
+    img.style.cssText = 'width:100%;border-radius:16px;display:block;';
+    wrap.appendChild(img);
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      showRetry('Taking too long.<br>Try again in a moment.');
+    } else {
+      showRetry('Something went wrong.<br>Try again in a moment.');
+    }
+  }
+}
+
+function closeAccessoryOverlay(e) {
+  if (e && e.target !== document.getElementById('accessoryOverlay')) return;
+  document.getElementById('accessoryOverlay').classList.remove('open');
+}
+
 function shareScore() {
   const score = document.getElementById('scoreNum').textContent;
   const label = document.getElementById('scoreLabel').textContent;
@@ -1938,7 +2280,7 @@ function shareScore() {
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('shareBtn');
       btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Share', 2000);
+      setTimeout(() => btn.textContent = 'Share my score', 2000);
     });
   }
 }
@@ -1961,7 +2303,29 @@ function toggleChip(chip) {
   chip.classList.toggle('selected');
 }
 
-function submitFeedback() {
+async function submitFeedback() {
+  const submitBtn = document.querySelector('.fb-submit');
+  submitBtn.textContent = 'Sending...';
+  submitBtn.disabled = true;
+
+  const rating = selectedRating || null;
+  const thoughts = [...document.querySelectorAll('#thoughtChips .chip.selected')].map(c => c.textContent.trim());
+  const improvements = [...document.querySelectorAll('#improveChips .chip.selected')].map(c => c.textContent.trim());
+  const comment = (document.getElementById('fbTextarea').value || '').trim() || null;
+  const score = parseFloat(document.getElementById('scoreNum')?.textContent) || null;
+
+  try {
+    await fetch(WORKER_URL + '/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: _getUID(), rating, thoughts, improvements, comment, score })
+    });
+  } catch (_) {
+    // Never block the user on a failed feedback send
+  }
+
+  submitBtn.textContent = 'Submit feedback';
+  submitBtn.disabled = false;
   document.getElementById('feedbackForm').style.display = 'none';
   document.getElementById('thankyouState').style.display = 'block';
 }

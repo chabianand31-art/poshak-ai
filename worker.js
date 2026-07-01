@@ -13,142 +13,256 @@ export default {
 
     const url = new URL(request.url);
 
-    // ── GET /analytics — stats dashboard (secret-protected) ──
-    if (url.pathname === '/analytics' && request.method === 'GET') {
+    // ── Helpers ──
+    const json = (data, status = 200) =>
+      new Response(JSON.stringify(data, null, 2), {
+        status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    const unauthorized = () =>
+      new Response('Unauthorized', { status: 401, headers: corsHeaders });
+
+    const isAuthorized = () => {
       const secret = url.searchParams.get('secret');
-      if (!env.ANALYTICS_SECRET || secret !== env.ANALYTICS_SECRET) {
-        return new Response('Unauthorized', { status: 401 });
-      }
-      if (!env.ANALYTICS) {
-        return new Response(JSON.stringify({ error: 'KV namespace ANALYTICS not bound to this worker.' }), {
-          status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      const raw = await env.ANALYTICS.get('stats:global');
-      const stats = raw ? JSON.parse(raw) : { totalUsers: 0, returningUsers: 0, totalVisits: 0, totalScores: 0 };
-      return new Response(JSON.stringify(stats, null, 2), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      return env.ANALYTICS_SECRET && secret === env.ANALYTICS_SECRET;
+    };
+
+    const dbMissing = () =>
+      json({ error: 'D1 database (DB) is not bound to this worker. Add it in wrangler.toml.' }, 503);
+
+    // ─────────────────────────────────────────────
+    // GET /analytics — stats dashboard
+    // ─────────────────────────────────────────────
+    if (url.pathname === '/analytics' && request.method === 'GET') {
+      if (!isAuthorized()) return unauthorized();
+      if (!env.DB) return dbMissing();
+
+      const [
+        totalVisits,
+        totalScores,
+        totalUsers,
+        returningUsers,
+        scoresLast24h,
+        scoresLast7d,
+        avgScoreRow,
+        feedbackCount,
+        avgRatingRow,
+      ] = await env.DB.batch([
+        env.DB.prepare(`SELECT COUNT(*) AS n FROM events WHERE event = 'visit'`),
+        env.DB.prepare(`SELECT COUNT(*) AS n FROM events WHERE event = 'score'`),
+        env.DB.prepare(`SELECT COUNT(DISTINCT uid) AS n FROM events`),
+        env.DB.prepare(`
+          SELECT COUNT(*) AS n FROM (
+            SELECT uid FROM events WHERE event = 'visit'
+            GROUP BY uid HAVING COUNT(*) >= 2
+          )
+        `),
+        env.DB.prepare(`
+          SELECT COUNT(*) AS n FROM events
+          WHERE event = 'score'
+            AND created_at >= datetime('now', '-24 hours')
+        `),
+        env.DB.prepare(`
+          SELECT COUNT(*) AS n FROM events
+          WHERE event = 'score'
+            AND created_at >= datetime('now', '-7 days')
+        `),
+        env.DB.prepare(`SELECT ROUND(AVG(score), 1) AS avg FROM feedback WHERE score IS NOT NULL`),
+        env.DB.prepare(`SELECT COUNT(*) AS n FROM feedback`),
+        env.DB.prepare(`SELECT ROUND(AVG(rating), 1) AS avg FROM feedback WHERE rating IS NOT NULL`),
+      ]);
+
+      return json({
+        totalVisits:     totalVisits.results[0]?.n    ?? 0,
+        totalScores:     totalScores.results[0]?.n    ?? 0,
+        totalUsers:      totalUsers.results[0]?.n     ?? 0,
+        returningUsers:  returningUsers.results[0]?.n ?? 0,
+        scoresLast24h:   scoresLast24h.results[0]?.n  ?? 0,
+        scoresLast7d:    scoresLast7d.results[0]?.n   ?? 0,
+        avgOutfitScore:  avgScoreRow.results[0]?.avg  ?? null,
+        totalFeedback:   feedbackCount.results[0]?.n  ?? 0,
+        avgFeedbackRating: avgRatingRow.results[0]?.avg ?? null,
       });
     }
 
-    if (request.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 });
+    // ─────────────────────────────────────────────
+    // GET /feedback/list — paginated feedback + aggregates
+    // ─────────────────────────────────────────────
+    if (url.pathname === '/feedback/list' && request.method === 'GET') {
+      if (!isAuthorized()) return unauthorized();
+      if (!env.DB) return dbMissing();
+
+      const limit  = Math.min(parseInt(url.searchParams.get('limit')  || '100'), 500);
+      const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'),   0);
+
+      const [rows, countRow, avgRow] = await env.DB.batch([
+        env.DB.prepare(`
+          SELECT id, uid, rating, thoughts, improvements, comment, score, created_at
+          FROM feedback
+          ORDER BY created_at DESC
+          LIMIT ? OFFSET ?
+        `).bind(limit, offset),
+        env.DB.prepare(`SELECT COUNT(*) AS n FROM feedback`),
+        env.DB.prepare(`SELECT ROUND(AVG(rating), 1) AS avg FROM feedback WHERE rating IS NOT NULL`),
+      ]);
+
+      // Parse stored JSON arrays and tally chip selections
+      const thoughtCounts = {}, improveCounts = {};
+      const entries = rows.results.map(r => {
+        const thoughts     = JSON.parse(r.thoughts     || '[]');
+        const improvements = JSON.parse(r.improvements || '[]');
+        thoughts.forEach(t     => { thoughtCounts[t]     = (thoughtCounts[t]     || 0) + 1; });
+        improvements.forEach(i => { improveCounts[i]     = (improveCounts[i]     || 0) + 1; });
+        return { ...r, thoughts, improvements };
+      });
+
+      return json({
+        total:         countRow.results[0]?.n   ?? 0,
+        avgRating:     avgRow.results[0]?.avg    ?? null,
+        thoughtCounts,
+        improveCounts,
+        entries,
+      });
     }
 
-    // ── POST /track — record visit or score event ──
+    // Everything below is POST-only
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    }
+
+    // ─────────────────────────────────────────────
+    // POST /track — record visit or score event
+    // ─────────────────────────────────────────────
     if (url.pathname === '/track') {
       try {
         const { uid, event } = await request.json();
+
         if (!uid || !['visit', 'score'].includes(event)) {
-          return new Response(JSON.stringify({ ok: false }), {
-            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+          return json({ ok: false, error: 'Invalid uid or event' }, 400);
         }
 
-        // Silently succeed if KV not yet configured
-        if (!env.ANALYTICS) {
-          return new Response(JSON.stringify({ ok: true }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
+        if (!env.DB) return json({ ok: true }); // silently succeed during local dev
 
-        const userKey = `user:${uid}`;
-        const userRaw = await env.ANALYTICS.get(userKey);
-        const isNew = !userRaw;
-        const user = userRaw
-          ? JSON.parse(userRaw)
-          : { firstSeen: new Date().toISOString(), visits: 0, scores: 0 };
+        await env.DB.prepare(`INSERT INTO events (uid, event) VALUES (?, ?)`)
+          .bind(uid, event)
+          .run();
 
-        user.lastSeen = new Date().toISOString();
-        if (event === 'visit') user.visits = (user.visits || 0) + 1;
-        if (event === 'score') user.scores = (user.scores || 0) + 1;
-        await env.ANALYTICS.put(userKey, JSON.stringify(user));
-
-        // Update global counters
-        const globalRaw = await env.ANALYTICS.get('stats:global');
-        const g = globalRaw
-          ? JSON.parse(globalRaw)
-          : { totalUsers: 0, returningUsers: 0, totalVisits: 0, totalScores: 0 };
-
-        if (event === 'visit') {
-          g.totalVisits = (g.totalVisits || 0) + 1;
-          if (isNew) {
-            g.totalUsers = (g.totalUsers || 0) + 1;
-          } else {
-            // Only count as returning on their 2nd+ visit session
-            if (user.visits === 2) g.returningUsers = (g.returningUsers || 0) + 1;
-          }
-        }
-        if (event === 'score') g.totalScores = (g.totalScores || 0) + 1;
-        await env.ANALYTICS.put('stats:global', JSON.stringify(g));
-
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        return json({ ok: true });
       } catch (err) {
-        return new Response(JSON.stringify({ ok: false, error: err.message }), {
-          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        return json({ ok: false, error: err.message }, 500);
       }
     }
 
-    // ── POST /transform — img2img: apply outfit changes to the actual uploaded photo ──
+    // ─────────────────────────────────────────────
+    // POST /feedback — store one feedback submission
+    // ─────────────────────────────────────────────
+    if (url.pathname === '/feedback') {
+      try {
+        const { uid, rating, thoughts, improvements, comment, score } = await request.json();
+
+        if (!env.DB) return json({ ok: true }); // silently succeed during local dev
+
+        await env.DB.prepare(`
+          INSERT INTO feedback (uid, rating, thoughts, improvements, comment, score)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(
+          uid          || null,
+          typeof rating   === 'number' ? rating   : null,
+          JSON.stringify(Array.isArray(thoughts)    ? thoughts    : []),
+          JSON.stringify(Array.isArray(improvements)? improvements: []),
+          typeof comment  === 'string' ? comment.slice(0, 1000) : null,
+          typeof score    === 'number' ? score    : null,
+        ).run();
+
+        return json({ ok: true });
+      } catch (err) {
+        return json({ ok: false, error: err.message }, 500);
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // POST /transform — generate outfit image via Flux
+    // ─────────────────────────────────────────────
     if (url.pathname === '/transform') {
       try {
         const { prompt } = await request.json();
 
-        if (!prompt) {
-          return new Response(JSON.stringify({ error: 'prompt is required' }), {
-            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
+        if (!prompt) return json({ error: 'prompt is required' }, 400);
 
         const result = await env.AI.run('@cf/black-forest-labs/flux-1-schnell', {
-          prompt: prompt,
+          prompt,
           num_steps: 8,
-          width: 768,
-          height: 1024,
+          width:     768,
+          height:    1024,
         });
 
-        // FLUX returns base64 JSON — decode to binary PNG
+        // Flux returns base64-encoded PNG — decode to binary
         const imageData = result.image
           ? Uint8Array.from(atob(result.image), c => c.charCodeAt(0))
           : result;
 
         return new Response(imageData, {
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'image/png',
-          }
+          headers: { ...corsHeaders, 'Content-Type': 'image/png' },
         });
-
       } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), {
-          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        return json({ error: err.message }, 500);
       }
     }
 
-    // ── Default route — Groq proxy ──
-    const body = await request.json();
+    // ─────────────────────────────────────────────
+    // POST /accessory — add a specific accessory to the original outfit photo
+    // ─────────────────────────────────────────────
+    if (url.pathname === '/accessory') {
+      try {
+        const { imageBase64, prompt } = await request.json();
+        if (!imageBase64 || !prompt) return json({ error: 'imageBase64 and prompt are required' }, 400);
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${env.GROQ_API_KEY}`
-      },
-      body: JSON.stringify(body)
-    });
+        const imageBytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
 
-    const data = await response.json();
+        const result = await env.AI.run('@cf/runwayml/stable-diffusion-v1-5-img2img', {
+          prompt: prompt + ', photorealistic fashion photograph, studio lighting, sharp focus, real person, high detail',
+          negative_prompt: 'cartoon, illustration, painting, drawing, sketch, animated, 3d render, cgi, manga, anime, plastic, fake, artificial, blurry',
+          image: [...imageBytes],
+          strength: 0.42,
+          num_inference_steps: 20,
+          guidance: 7.5,
+        });
 
-    return new Response(JSON.stringify(data), {
-      status: response.status,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
+        const imageData = result.image
+          ? Uint8Array.from(atob(result.image), c => c.charCodeAt(0))
+          : result;
+
+        return new Response(imageData, {
+          headers: { ...corsHeaders, 'Content-Type': 'image/png' },
+        });
+      } catch (err) {
+        return json({ error: err.message }, 500);
       }
-    });
-  }
+    }
+
+    // ─────────────────────────────────────────────
+    // Default — Groq vision proxy
+    // ─────────────────────────────────────────────
+    try {
+      const body = await request.json();
+
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+      return new Response(JSON.stringify(data), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (err) {
+      return json({ error: err.message }, 500);
+    }
+  },
 };
