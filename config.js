@@ -10,8 +10,9 @@ const CONFIG = {
     GROQ_PROXY:  '/',           // POST  — proxies requests to Groq LLM API
     TRACK:       '/track',      // POST  — analytics: record visit / score events
     TRANSFORM:   '/transform',  // POST  — image generation via FLUX-1-Schnell (CF AI)
-    ACCESSORY:   '/accessory',  // POST  — add accessory to original photo via SD img2img
-    ANALYTICS:   '/analytics',  // GET   — stats dashboard (requires ?secret=)
+    ACCESSORY:      '/accessory',       // POST  — add accessory to original photo via gpt-image-1
+    LOOK_REACTION:  '/look-reaction',   // POST  — thumbs up/down on generated accessory look
+    ANALYTICS:      '/analytics',       // GET   — stats dashboard (requires ?secret=)
   },
 
   // External APIs (called by the Worker, not the browser directly)

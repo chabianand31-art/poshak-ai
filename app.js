@@ -778,6 +778,33 @@ async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation
     img.style.cssText = 'width:100%;border-radius:16px;display:block;';
     wrap.appendChild(img);
 
+    // Reaction buttons
+    const reactionDiv = document.createElement('div');
+    reactionDiv.className = 'look-reaction';
+    reactionDiv.innerHTML = `
+      <span class="look-reaction-label">How did this look?</span>
+      <div class="look-reaction-btns">
+        <button class="reaction-btn" data-r="like" title="Looks good">👍</button>
+        <button class="reaction-btn" data-r="dislike" title="Needs work">👎</button>
+      </div>`;
+    reactionDiv.querySelectorAll('.reaction-btn').forEach(btn => {
+      btn.onclick = () => {
+        if (reactionDiv.dataset.voted) return;
+        reactionDiv.dataset.voted = '1';
+        reactionDiv.querySelectorAll('.reaction-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        reactionDiv.querySelector('.look-reaction-label').textContent = btn.dataset.r === 'like' ? 'Glad you liked it!' : 'Thanks — noted!';
+        try {
+          fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.LOOK_REACTION, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: _getUID(), accessory: accessoryLabel, reaction: btn.dataset.r }),
+          }).catch(() => {});
+        } catch (_) {}
+      };
+    });
+    wrap.appendChild(reactionDiv);
+
   } catch (err) {
     if (err.name === 'AbortError') {
       showRetry('Taking too long.<br>Refresh and try again.');
