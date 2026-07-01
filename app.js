@@ -535,9 +535,15 @@ function showNewLook() {
 }
 
 async function generateLookImage(wrap) {
-  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Applying changes to your photo...</div></div>';
+  const loadInterval = startImageLoadingUI(wrap, [
+    'Reading the suggestion...',
+    'Rebuilding the look...',
+    'Adding finishing touches...',
+    'Almost there...',
+  ]);
 
   function showRetry(msg) {
+    clearInterval(loadInterval);
     wrap.innerHTML = `
       <div style="padding:2rem;text-align:center;">
         <div style="font-size:13px;color:#8C8579;line-height:1.6;margin-bottom:1rem;">${msg}</div>
@@ -566,6 +572,7 @@ async function generateLookImage(wrap) {
       return;
     }
 
+    clearInterval(loadInterval);
     const blob = await res.blob();
     const objUrl = URL.createObjectURL(blob);
     currentLookImageUrl = objUrl;
@@ -628,6 +635,53 @@ function submitFeedback() {
   document.getElementById('thankyouState').style.display = 'block';
 }
 
+// ── Shared image-generation loading UI ──
+
+const FASHION_QUOTES = [
+  '"Fashion is the armour to survive the reality of everyday life." — Bill Cunningham',
+  '"Style is a way to say who you are without having to speak." — Rachel Zoe',
+  '"Fashion is not something that exists in dresses only. It is in the sky, in the street." — Coco Chanel',
+  '"Clothes mean nothing until someone lives in them." — Marc Jacobs',
+  '"In difficult times, fashion is always outrageous." — Elsa Schiaparelli',
+  '"The dress must follow the body of a woman, not the body following the dress." — Hubert de Givenchy',
+  '"Elegance is not about being noticed, it\'s about being remembered." — Giorgio Armani',
+  '"Fashion is about something that comes from within you." — Ralph Lauren',
+  '"Style is knowing who you are, what you want to say, and not giving a damn." — Orson Welles',
+  '"A woman who wears no perfume has no future." — Coco Chanel',
+];
+
+function startImageLoadingUI(wrap, steps) {
+  wrap.innerHTML = `
+    <div class="newlook-loading">
+      <div class="newlook-shimmer"></div>
+      <div class="newlook-step" id="_nlStep">${steps[0]}</div>
+      <div class="newlook-quote" id="_nlQuote"></div>
+    </div>`;
+
+  let stepIdx = 0, quoteIdx = Math.floor(Math.random() * FASHION_QUOTES.length);
+  const stepEl  = wrap.querySelector('#_nlStep');
+  const quoteEl = wrap.querySelector('#_nlQuote');
+
+  // Fade in first quote
+  quoteEl.style.opacity = '0';
+  setTimeout(() => { quoteEl.textContent = FASHION_QUOTES[quoteIdx]; quoteEl.style.opacity = '1'; }, 300);
+
+  const interval = setInterval(() => {
+    // Advance step
+    if (stepIdx < steps.length - 1) {
+      stepIdx++;
+      stepEl.style.opacity = '0';
+      setTimeout(() => { stepEl.textContent = steps[stepIdx]; stepEl.style.opacity = '1'; }, 400);
+    }
+    // Rotate quote
+    quoteEl.style.opacity = '0';
+    quoteIdx = (quoteIdx + 1) % FASHION_QUOTES.length;
+    setTimeout(() => { quoteEl.textContent = FASHION_QUOTES[quoteIdx]; quoteEl.style.opacity = '1'; }, 600);
+  }, 5000);
+
+  return interval;
+}
+
 // ── Accessory try-on ──
 
 const ACCESSORY_RE = /\b(earring|jhumka|jhumki|hoop|stud|clutch|bag|handbag|tote|sling[- ]?bag|belt|buckle|watch|necklace|chain|pendant|choker|bracelet|bangle|scarf|dupatta|stole|sunglasses|shades|brooch|cuff|anklet|hair\s*clip|headband|scrunchie)\b/i;
@@ -677,9 +731,15 @@ function showAccessoryTryOn(tipText, accessoryLabel, cacheKey, observation) {
 }
 
 async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation, cacheKey) {
-  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Adding ' + accessoryLabel + ' to your photo...</div></div>';
+  const loadInterval = startImageLoadingUI(wrap, [
+    'Studying your photo...',
+    'Placing the ' + accessoryLabel + '...',
+    'Blending it in...',
+    'Almost there...',
+  ]);
 
   function showRetry(msg) {
+    clearInterval(loadInterval);
     wrap.innerHTML = `
       <div style="padding:2rem;text-align:center;">
         <div style="font-size:13px;color:#8C8579;line-height:1.6;margin-bottom:1rem;">${msg}</div>
@@ -706,6 +766,7 @@ async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation
       return;
     }
 
+    clearInterval(loadInterval);
     const blob = await res.blob();
     const objUrl = URL.createObjectURL(blob);
     accessoryImageCache[cacheKey] = objUrl;
