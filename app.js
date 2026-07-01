@@ -399,7 +399,7 @@ function getPillClass(score) {
 function displayResult(result) {
   showScreen('result');
 
-  const { scores, label, vibe_line, whats_working, nudge, tips, image_prompt, partial_body, shoes_visible } = result;
+  const { scores, label, vibe_line, whats_working, nudge, tips, image_prompt, partial_body, shoes_visible, observation } = result;
   currentImagePrompt = image_prompt || null;
   const total = scores.total;
 
@@ -481,7 +481,7 @@ function displayResult(result) {
       URL.revokeObjectURL(accessoryImageCache[k]);
       delete accessoryImageCache[k];
     });
-    setTimeout(() => wireAccessoryButtons(tips, shoes_visible), 600);
+    setTimeout(() => wireAccessoryButtons(tips, shoes_visible, observation), 600);
   }
 
   // Label + share
@@ -641,7 +641,7 @@ function submitFeedback() {
 const ACCESSORY_RE = /\b(earring|jhumka|jhumki|hoop|stud|clutch|bag|handbag|tote|sling[- ]?bag|belt|buckle|watch|necklace|chain|pendant|choker|bracelet|bangle|scarf|dupatta|stole|sunglasses|shades|brooch|cuff|anklet|hair\s*clip|headband|scrunchie)\b/i;
 const accessoryImageCache = {};
 
-function wireAccessoryButtons(tips, shoes_visible) {
+function wireAccessoryButtons(tips, shoes_visible, observation) {
   const tipArr = [tips.color_harmony, tips.outfit_cohesion, tips.intentionality, tips.silhouette];
   tipArr.forEach((tipText, i) => {
     if (!tipText) return;
@@ -657,16 +657,16 @@ function wireAccessoryButtons(tips, shoes_visible) {
 
     const btn = document.createElement('button');
     btn.className = 'tryon-btn';
-    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg> See it on you`;
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg> See the look`;
     btn.onclick = (e) => {
       e.stopPropagation();
-      showAccessoryTryOn(tipText, accessoryLabel, i);
+      showAccessoryTryOn(tipText, accessoryLabel, i, observation);
     };
     tipEl.parentNode.appendChild(btn);
   });
 }
 
-function showAccessoryTryOn(tipText, accessoryLabel, cacheKey) {
+function showAccessoryTryOn(tipText, accessoryLabel, cacheKey, observation) {
   const overlay = document.getElementById('accessoryOverlay');
   const wrap = document.getElementById('accessoryImgWrap');
   document.getElementById('accessoryOverlayTitle').textContent = 'How it could look with ' + accessoryLabel;
@@ -681,11 +681,11 @@ function showAccessoryTryOn(tipText, accessoryLabel, cacheKey) {
     return;
   }
 
-  generateAccessoryImage(wrap, tipText, cacheKey);
+  generateAccessoryImage(wrap, tipText, accessoryLabel, observation, cacheKey);
 }
 
-async function generateAccessoryImage(wrap, tipText, cacheKey) {
-  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Adding item to your photo...</div></div>';
+async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation, cacheKey) {
+  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Generating the look...</div></div>';
 
   function showRetry(msg) {
     wrap.innerHTML = `
@@ -695,14 +695,20 @@ async function generateAccessoryImage(wrap, tipText, cacheKey) {
       </div>`;
   }
 
+  // Build a FLUX prompt from the observation + the specific accessory
+  const baseObservation = observation
+    ? observation.slice(0, 120)
+    : 'person in stylish outfit';
+  const fluxPrompt = baseObservation + ', with ' + accessoryLabel + ', fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus, photorealistic';
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
 
-    const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.ACCESSORY, {
+    const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.TRANSFORM, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: currentImageBase64, prompt: 'same person, same outfit, same pose, ' + tipText }),
+      body: JSON.stringify({ prompt: fluxPrompt }),
       signal: controller.signal,
     });
 
@@ -725,11 +731,10 @@ async function generateAccessoryImage(wrap, tipText, cacheKey) {
     wrap.appendChild(img);
 
   } catch (err) {
-    console.error('[accessory]', err);
     if (err.name === 'AbortError') {
       showRetry('Taking too long.<br>Refresh and try again.');
     } else {
-      showRetry('Something went wrong: ' + err.message + '<br>Refresh and try again.');
+      showRetry('Something went wrong.<br>Refresh and try again.');
     }
   }
 }
