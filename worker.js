@@ -220,26 +220,40 @@ export default {
 
     // ─────────────────────────────────────────────
     // POST /accessory — add a specific accessory to the original outfit photo
+    // Uses OpenAI gpt-image-1 image editing
     // ─────────────────────────────────────────────
     if (url.pathname === '/accessory') {
       try {
-        const { imageBase64, prompt } = await request.json();
-        if (!imageBase64 || !prompt) return json({ error: 'imageBase64 and prompt are required' }, 400);
+        const { imageBase64, accessoryLabel } = await request.json();
+        if (!imageBase64 || !accessoryLabel) return json({ error: 'imageBase64 and accessoryLabel are required' }, 400);
+
+        if (!env.OPENAI_API_KEY) return json({ error: 'OPENAI_API_KEY secret not configured' }, 503);
 
         const imageBytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
+        const imageBlob = new Blob([imageBytes], { type: 'image/jpeg' });
 
-        const result = await env.AI.run('@cf/runwayml/stable-diffusion-v1-5-img2img', {
-          prompt: prompt + ', photorealistic fashion photograph, studio lighting, sharp focus, real person, high detail',
-          negative_prompt: 'cartoon, illustration, painting, drawing, sketch, animated, 3d render, cgi, manga, anime, plastic, fake, artificial, blurry',
-          image: [...imageBytes],
-          strength: 0.42,
-          num_inference_steps: 20,
-          guidance: 7.5,
+        const editPrompt = `Add ${accessoryLabel} to this person's outfit. Keep the person, their clothing, pose, background, and everything else exactly as they are. Only add the ${accessoryLabel} — nothing else should change.`;
+
+        const formData = new FormData();
+        formData.append('model', 'gpt-image-1');
+        formData.append('image[]', imageBlob, 'outfit.jpg');
+        formData.append('prompt', editPrompt);
+        formData.append('n', '1');
+        formData.append('size', '1024x1536');
+
+        const response = await fetch('https://api.openai.com/v1/images/edits', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${env.OPENAI_API_KEY}` },
+          body: formData,
         });
 
-        const imageData = result.image
-          ? Uint8Array.from(atob(result.image), c => c.charCodeAt(0))
-          : result;
+        const data = await response.json();
+
+        if (!response.ok) {
+          return json({ error: data.error?.message || 'OpenAI error' }, response.status);
+        }
+
+        const imageData = Uint8Array.from(atob(data.data[0].b64_json), c => c.charCodeAt(0));
 
         return new Response(imageData, {
           headers: { ...corsHeaders, 'Content-Type': 'image/png' },

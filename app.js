@@ -685,7 +685,7 @@ function showAccessoryTryOn(tipText, accessoryLabel, cacheKey, observation) {
 }
 
 async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation, cacheKey) {
-  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Generating the look...</div></div>';
+  wrap.innerHTML = '<div class="newlook-loading"><div class="newlook-spinner"></div><div class="newlook-loading-text">Adding ' + accessoryLabel + ' to your photo...</div></div>';
 
   function showRetry(msg) {
     wrap.innerHTML = `
@@ -695,20 +695,14 @@ async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation
       </div>`;
   }
 
-  // Build a FLUX prompt from the observation + the specific accessory
-  const baseObservation = observation
-    ? observation.slice(0, 120)
-    : 'person in stylish outfit';
-  const fluxPrompt = baseObservation + ', with ' + accessoryLabel + ', fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus, photorealistic';
-
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
 
-    const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.TRANSFORM, {
+    const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.ACCESSORY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: fluxPrompt }),
+      body: JSON.stringify({ imageBase64: currentImageBase64, accessoryLabel }),
       signal: controller.signal,
     });
 
