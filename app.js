@@ -716,6 +716,9 @@ function showAccessoryTryOn(tipText, accessoryLabel, cacheKey, observation) {
   const overlay = document.getElementById('accessoryOverlay');
   const wrap = document.getElementById('accessoryImgWrap');
   document.getElementById('accessoryOverlayTitle').textContent = 'How it could look with ' + accessoryLabel;
+  // Clean up any previous reaction row
+  const prevReaction = document.getElementById('accessoryReaction');
+  if (prevReaction) prevReaction.remove();
   overlay.classList.add('open');
 
   if (accessoryImageCache[cacheKey]) {
@@ -778,8 +781,11 @@ async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation
     img.style.cssText = 'width:100%;border-radius:16px;display:block;';
     wrap.appendChild(img);
 
-    // Reaction buttons
+    // Reaction buttons — inserted after the wrap (not inside it) to avoid overflow:hidden clipping
+    const existing = document.getElementById('accessoryReaction');
+    if (existing) existing.remove();
     const reactionDiv = document.createElement('div');
+    reactionDiv.id = 'accessoryReaction';
     reactionDiv.className = 'look-reaction';
     reactionDiv.innerHTML = `
       <span class="look-reaction-label">How did this look?</span>
@@ -803,7 +809,7 @@ async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation
         } catch (_) {}
       };
     });
-    wrap.appendChild(reactionDiv);
+    wrap.insertAdjacentElement('afterend', reactionDiv);
 
   } catch (err) {
     if (err.name === 'AbortError') {
