@@ -190,6 +190,25 @@ export default {
     }
 
     // ─────────────────────────────────────────────
+    // POST /look-reaction — thumbs up/down on accessory try-on
+    // ─────────────────────────────────────────────
+    if (url.pathname === '/look-reaction') {
+      try {
+        const { uid, accessory, reaction } = await request.json();
+        if (!reaction || !['like', 'dislike'].includes(reaction)) {
+          return json({ ok: false, error: 'Invalid reaction' }, 400);
+        }
+        if (!env.DB) return json({ ok: true });
+        await env.DB.prepare(
+          `INSERT INTO look_reactions (uid, accessory, reaction) VALUES (?, ?, ?)`
+        ).bind(uid || null, accessory || null, reaction).run();
+        return json({ ok: true });
+      } catch (err) {
+        return json({ ok: false, error: err.message }, 500);
+      }
+    }
+
+    // ─────────────────────────────────────────────
     // POST /transform — generate outfit image via Flux
     // ─────────────────────────────────────────────
     if (url.pathname === '/transform') {
