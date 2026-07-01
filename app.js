@@ -699,7 +699,7 @@ async function generateAccessoryImage(wrap, tipText, cacheKey) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
 
-    const res = await fetch(WORKER_URL + '/accessory', {
+    const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.ACCESSORY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ imageBase64: currentImageBase64, prompt: 'same person, same outfit, same pose, ' + tipText }),

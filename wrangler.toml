@@ -1,4 +1,4 @@
-name = "poshak-ai"
+name = "poshak-proxy"
 main = "worker.js"
 compatibility_date = "2026-05-13"
 account_id = "0b1514dc6cc8bf38d1315e50e8dbb455"
