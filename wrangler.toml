@@ -1,0 +1,12 @@
+name = "poshak-ai"
+main = "worker.js"
+compatibility_date = "2026-05-13"
+account_id = "0b1514dc6cc8bf38d1315e50e8dbb455"
+
+[ai]
+binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "poshak-feedback"
+database_id = "06bdd230-c690-4dbc-8a69-f63e5e9a53ab"
