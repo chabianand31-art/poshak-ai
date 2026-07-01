@@ -691,7 +691,7 @@ async function generateAccessoryImage(wrap, tipText, cacheKey) {
     wrap.innerHTML = `
       <div style="padding:2rem;text-align:center;">
         <div style="font-size:13px;color:#8C8579;line-height:1.6;margin-bottom:1rem;">${msg}</div>
-        <button onclick="generateAccessoryImage(document.getElementById('accessoryImgWrap'),${JSON.stringify(tipText)},${JSON.stringify(cacheKey)})" style="padding:8px 20px;border-radius:8px;background:#D85A30;color:#fff;border:none;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Try again</button>
+        <button onclick="closeAccessoryOverlay();goHome();" style="padding:8px 20px;border-radius:8px;background:#D85A30;color:#fff;border:none;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Go back home</button>
       </div>`;
   }
 
