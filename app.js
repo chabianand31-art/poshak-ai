@@ -736,6 +736,7 @@ async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation
     'Placing the ' + accessoryLabel + '...',
     'Blending it in...',
     'Almost there...',
+    'Still rendering — this one\'s worth the wait...',
   ]);
 
   function showRetry(msg) {
@@ -749,7 +750,7 @@ async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const timeout = setTimeout(() => controller.abort(), 120000); // gpt-image-1 can take up to ~90s
 
     const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.ACCESSORY, {
       method: 'POST',
