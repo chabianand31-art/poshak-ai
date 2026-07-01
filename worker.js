@@ -232,7 +232,7 @@ export default {
         const imageBytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
         const imageBlob = new Blob([imageBytes], { type: 'image/jpeg' });
 
-        const editPrompt = `Add ${accessoryLabel} to this person's outfit. Keep the person, their clothing, pose, background, and everything else exactly as they are. Only add the ${accessoryLabel} — nothing else should change.`;
+        const editPrompt = `Add ${accessoryLabel} to this person's outfit. Keep the person, their clothing, pose, background, and everything else exactly as they are. Only add the ${accessoryLabel} — nothing else should change. Do not add, alter, or hallucinate any text, words, signs, watermarks, or written characters anywhere in the image.`;
 
         const formData = new FormData();
         formData.append('model', 'gpt-image-1');
