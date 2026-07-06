@@ -364,6 +364,26 @@
 </div>
 
 
+<!-- SHARE MODAL -->
+<div class="newlook-overlay" id="shareOverlay" onclick="closeShareModal(event)">
+  <div class="newlook-sheet">
+    <div class="newlook-handle"></div>
+    <div class="newlook-label">Share your score</div>
+    <div class="newlook-title">Your score card is ready</div>
+    <div style="border-radius:16px;overflow:hidden;margin-bottom:1rem;background:#1A1714;">
+      <img id="shareCardImg" style="width:100%;display:block;" src="" alt="Score card">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:0.75rem;">
+      <button class="action-primary" onclick="downloadShareCard()" style="width:100%;">Save image</button>
+      <button class="action-sec" id="copyCaptionBtn" onclick="copyShareCaption()" style="width:100%;">Copy caption</button>
+    </div>
+    <div style="font-size:11.5px;color:#8C8579;text-align:center;line-height:1.6;margin-bottom:1rem;">
+      Save the image → open Instagram → post with the copied caption
+    </div>
+    <button class="newlook-close" onclick="closeShareModal()">Close</button>
+  </div>
+</div>
+
 <!-- ACCESSORY TRY-ON MODAL -->
 <div class="newlook-overlay" id="accessoryOverlay" onclick="closeAccessoryOverlay(event)">
   <div class="newlook-sheet">
