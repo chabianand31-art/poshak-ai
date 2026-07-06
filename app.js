@@ -20,6 +20,9 @@ track('visit');
 
 let currentImageBase64 = null;
 let currentMediaType = 'image/jpeg';
+let currentShareData = null;
+let currentShareCardUrl = null;
+let currentShareCaption = null;
 
 function getMediaType(file) {
   if (file.type && file.type.startsWith('image/')) return file.type;
@@ -186,7 +189,10 @@ function showScreen(id) {
 function goHome() {
   currentImageBase64 = null;
   currentImagePrompt = null;
+  currentShareData = null;
   if (currentLookImageUrl) { URL.revokeObjectURL(currentLookImageUrl); currentLookImageUrl = null; }
+  if (currentShareCardUrl) { URL.revokeObjectURL(currentShareCardUrl); currentShareCardUrl = null; }
+  currentShareCaption = null;
   document.getElementById('fileInput').value = '';
   document.getElementById('cameraInput').value = '';
   document.querySelectorAll('.dim-item').forEach(d => d.classList.remove('open'));
@@ -394,6 +400,7 @@ function displayResult(result) {
   const { scores, label, vibe_line, whats_working, nudge, tips, image_prompt, partial_body, shoes_visible, observation } = result;
   currentImagePrompt = image_prompt || null;
   const total = scores.total;
+  currentShareData = { score: total / 10, label, vibe_line };
 
   // Show partial body notice if applicable
   const partialNotice = document.getElementById('partialBodyNotice');
@@ -596,20 +603,173 @@ function closeNewLook(e) {
   document.getElementById('newlookOverlay').classList.remove('open');
 }
 
-function shareScore() {
-  const score = document.getElementById('scoreNum').textContent;
-  const label = document.getElementById('scoreLabel').textContent;
-  const appUrl = CONFIG.APP_URL;
-  const text = `My outfit scored ${score}/10 ✨\n"${label}"\n\n#PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
-  if (navigator.share) {
-    navigator.share({ title: 'PoshakbyAI — drip.check', text, url: appUrl });
-  } else {
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = document.getElementById('shareBtn');
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Share', 2000);
-    });
+function buildShareCaption() {
+  if (!currentShareData) return '';
+  const score = currentShareData.score.toFixed(1);
+  const label = currentShareData.label || '';
+  return `Got my drip.check ✨\n\nScore: ${score}/10 — "${label}"\n\nRate yours → poshakbyai.com\n\n#poshakbyai #PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
+}
+
+async function generateShareCard() {
+  const W = 600, H = 750;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  await document.fonts.ready;
+
+  // Draw outfit photo (cover-fill entire canvas)
+  const src = document.getElementById('previewImg').src;
+  const img = await new Promise((res, rej) => {
+    const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src;
+  });
+  const scale = Math.max(W / img.width, H / img.height);
+  const iw = img.width * scale, ih = img.height * scale;
+  ctx.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
+
+  // Subtle overall darkening
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Bottom gradient overlay
+  const grad = ctx.createLinearGradient(0, H - 230, 0, H);
+  grad.addColorStop(0, 'rgba(26,23,20,0)');
+  grad.addColorStop(0.5, 'rgba(26,23,20,0.88)');
+  grad.addColorStop(1, 'rgba(26,23,20,1)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, H - 230, W, 230);
+
+  const PAD = 30;
+
+  // Score number (left side)
+  ctx.textAlign = 'left';
+  ctx.font = '400 64px "Playfair Display", Georgia, serif';
+  ctx.fillStyle = '#C84B23';
+  ctx.fillText(currentShareData.score.toFixed(1), PAD, H - 86);
+
+  // /10
+  const scoreW = ctx.measureText(currentShareData.score.toFixed(1)).width;
+  ctx.font = '300 20px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(247,244,239,0.35)';
+  ctx.fillText('/10', PAD + scoreW + 5, H - 100);
+
+  // Label (italic, below score)
+  ctx.font = 'italic 400 14px "Playfair Display", Georgia, serif';
+  ctx.fillStyle = 'rgba(247,244,239,0.72)';
+  const maxLabelW = W - PAD * 2 - 140;
+  let lbl = '\u201C' + (currentShareData.label || '') + '\u201D';
+  if (ctx.measureText(lbl).width > maxLabelW) {
+    lbl = lbl.slice(0, -1);
+    while (ctx.measureText(lbl + '\u2026\u201D').width > maxLabelW && lbl.length > 2) {
+      lbl = lbl.slice(0, -1);
+    }
+    lbl += '\u2026\u201D';
   }
+  ctx.fillText(lbl, PAD, H - 56);
+
+  // Brand (bottom right)
+  ctx.textAlign = 'right';
+  ctx.font = '500 13px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(247,244,239,0.45)';
+  ctx.fillText('poshakbyAI', W - PAD, H - 26);
+
+  return new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+}
+
+async function shareScore() {
+  if (!currentShareData) return;
+
+  const btn = document.getElementById('shareBtn');
+  const origText = btn.textContent;
+  btn.textContent = 'Preparing…';
+  btn.disabled = true;
+
+  let blob;
+  try {
+    blob = await generateShareCard();
+  } catch (_) {
+    blob = null;
+  }
+
+  const caption = buildShareCaption();
+
+  // Mobile: try Web Share API with image file (triggers native share sheet → Instagram)
+  if (blob && navigator.share && navigator.canShare) {
+    const testFile = new File([blob], 'poshakbyai-score.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare({ files: [testFile] })) {
+      try {
+        await navigator.share({
+          title: 'poshakbyAI — drip.check',
+          text: caption,
+          files: [testFile]
+        });
+        track('share_instagram');
+        btn.textContent = origText;
+        btn.disabled = false;
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          btn.textContent = origText;
+          btn.disabled = false;
+          return;
+        }
+        // fall through to modal
+      }
+    }
+  }
+
+  btn.textContent = origText;
+  btn.disabled = false;
+
+  // Desktop / fallback: show share modal with card preview
+  if (blob) {
+    if (currentShareCardUrl) URL.revokeObjectURL(currentShareCardUrl);
+    currentShareCardUrl = URL.createObjectURL(blob);
+    currentShareCaption = caption;
+    showShareModal(currentShareCardUrl, caption);
+  } else {
+    // Last resort: text-only share or clipboard copy
+    if (navigator.share) {
+      navigator.share({ title: 'poshakbyAI', text: caption, url: CONFIG.APP_URL }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(caption).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = origText; }, 2000);
+      });
+    }
+  }
+}
+
+function showShareModal(imgUrl, caption) {
+  document.getElementById('shareCardImg').src = imgUrl;
+  currentShareCaption = caption;
+  document.getElementById('copyCaptionBtn').textContent = 'Copy caption';
+  document.getElementById('shareOverlay').classList.add('open');
+}
+
+function closeShareModal(e) {
+  if (e && e.target !== document.getElementById('shareOverlay')) return;
+  document.getElementById('shareOverlay').classList.remove('open');
+}
+
+function downloadShareCard() {
+  if (!currentShareCardUrl) return;
+  const a = document.createElement('a');
+  a.href = currentShareCardUrl;
+  a.download = 'poshakbyai-score.jpg';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  track('share_card_download');
+}
+
+function copyShareCaption() {
+  if (!currentShareCaption) return;
+  navigator.clipboard.writeText(currentShareCaption).then(() => {
+    const btn = document.getElementById('copyCaptionBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy caption'; }, 2000);
+  });
 }
 
 function toggleDim(el) {

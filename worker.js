@@ -134,9 +134,40 @@ export default {
       });
     }
 
+    // ─────────────────────────────────────────────
+    // GET /trends — read current live trend override
+    // ─────────────────────────────────────────────
+    if (url.pathname === '/trends' && request.method === 'GET') {
+      if (!isAuthorized()) return unauthorized();
+      if (!env.DB) return json({ trends: '' });
+      const row = await env.DB.prepare(
+        `SELECT value, updated_at FROM settings WHERE key = 'trend_override'`
+      ).first().catch(() => null);
+      return json({ trends: row?.value || '', updatedAt: row?.updated_at || null });
+    }
+
     // Everything below is POST-only
     if (request.method !== 'POST') {
       return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    }
+
+    // ─────────────────────────────────────────────
+    // POST /trends — save live trend override (admin)
+    // ─────────────────────────────────────────────
+    if (url.pathname === '/trends') {
+      if (!isAuthorized()) return unauthorized();
+      if (!env.DB) return json({ error: 'D1 not bound' }, 503);
+      try {
+        const { trends } = await request.json();
+        if (typeof trends !== 'string') return json({ error: 'trends must be a string' }, 400);
+        await env.DB.prepare(
+          `INSERT INTO settings (key, value, updated_at) VALUES ('trend_override', ?, datetime('now'))
+           ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+        ).bind(trends.slice(0, 8000)).run();
+        return json({ ok: true });
+      } catch (err) {
+        return json({ ok: false, error: err.message }, 500);
+      }
     }
 
     // ─────────────────────────────────────────────
@@ -287,6 +318,25 @@ export default {
     // ─────────────────────────────────────────────
     try {
       const body = await request.json();
+
+      // Inject live trend override from D1 into the system prompt
+      if (env.DB && Array.isArray(body.messages)) {
+        try {
+          const row = await env.DB.prepare(
+            `SELECT value FROM settings WHERE key = 'trend_override'`
+          ).first();
+          if (row?.value) {
+            const sysMsg = body.messages.find(m => m.role === 'system');
+            if (sysMsg && typeof sysMsg.content === 'string') {
+              sysMsg.content +=
+                '\n\n─────────────────────────────\n' +
+                'LIVE TREND INTELLIGENCE — THIS OVERRIDES THE STATIC TREND SECTION ABOVE. USE THIS.\n' +
+                '─────────────────────────────\n' +
+                row.value;
+            }
+          }
+        } catch (_) {} // never let a trend fetch failure break scoring
+      }
 
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',

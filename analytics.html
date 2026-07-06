@@ -67,6 +67,46 @@
     text-underline-offset: 3px;
   }
   #stats { display: none; }
+  .trend-section {
+    margin-top: 2.5rem; background: var(--white);
+    border-radius: 16px; border: 1px solid rgba(26,23,20,0.07);
+    padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .trend-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 400; color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .trend-section p {
+    font-size: 12px; color: var(--muted); margin-bottom: 1rem; line-height: 1.5;
+  }
+  .trend-section textarea {
+    width: 100%; min-height: 280px;
+    padding: 12px 14px; border-radius: 10px;
+    border: 1.5px solid rgba(26,23,20,0.12);
+    background: var(--parchment); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--ink); line-height: 1.6;
+    resize: vertical; outline: none;
+    transition: border-color 0.15s;
+  }
+  .trend-section textarea:focus { border-color: var(--coral); }
+  .trend-actions {
+    display: flex; gap: 10px; margin-top: 10px; align-items: center;
+  }
+  .trend-save {
+    padding: 11px 22px; border-radius: 10px;
+    background: linear-gradient(135deg, #D85A30, #C84B23);
+    color: #fff; border: none; font-size: 14px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    box-shadow: 0 3px 12px rgba(216,90,48,0.3);
+    transition: filter 0.15s;
+  }
+  .trend-save:hover { filter: brightness(1.07); }
+  .trend-save:disabled { opacity: 0.55; cursor: not-allowed; }
+  .trend-meta { font-size: 12px; color: var(--muted); }
+  .trend-msg { font-size: 13px; margin-left: auto; }
+  .trend-msg.ok { color: #4A7C59; }
+  .trend-msg.err { color: #A32D2D; }
 </style>
 </head>
 <body>
@@ -109,6 +149,18 @@
   </div>
 
   <div class="error" id="errorMsg"></div>
+
+  <!-- Trend editor — shown after auth -->
+  <div class="trend-section" id="trendSection" style="display:none;">
+    <h2>Live Trend Intelligence</h2>
+    <p>This text is injected into every scoring call, overriding the static trend section. Update it whenever fashion shifts — weekly or after a major runway season. Keep it structured (colours, silhouettes, fabrics, accessories, what's out, India-specific notes). Max 8000 chars.</p>
+    <textarea id="trendTextarea" placeholder="COLOURS TRENDING IN INDIA RIGHT NOW:&#10;- ...&#10;&#10;SILHOUETTES IN:&#10;- ...&#10;&#10;FABRICS &amp; TEXTURES IN:&#10;- ...&#10;&#10;ACCESSORIES IN DEMAND:&#10;- ...&#10;&#10;WHAT TO PENALISE (overdone / out):&#10;- ...&#10;&#10;INDIA-SPECIFIC HOT RIGHT NOW:&#10;- ...&#10;&#10;SOURCE: [Vogue India / Pinterest Trends / etc.]"></textarea>
+    <div class="trend-actions">
+      <button class="trend-save" id="trendSaveBtn" onclick="saveTrends()">Save trends</button>
+      <span class="trend-meta" id="trendMeta"></span>
+      <span class="trend-msg" id="trendMsg"></span>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -138,9 +190,58 @@ async function load() {
     document.getElementById('totalScores').textContent   = (data.totalScores   ?? 0).toLocaleString();
     document.getElementById('refreshedAt').textContent   = new Date().toLocaleTimeString();
     document.getElementById('stats').style.display = 'block';
+
+    // Load trend editor
+    loadTrends(secret);
+    document.getElementById('trendSection').style.display = 'block';
   } catch (err) {
     document.getElementById('errorMsg').textContent = 'Could not reach the worker. Check your connection.';
   }
+}
+
+async function loadTrends(secret) {
+  const s = secret || document.getElementById('secretInput').value.trim();
+  try {
+    const res = await fetch(`${WORKER_URL}/trends?secret=${encodeURIComponent(s)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    document.getElementById('trendTextarea').value = data.trends || '';
+    document.getElementById('trendMeta').textContent =
+      data.updatedAt ? `Last saved: ${new Date(data.updatedAt + 'Z').toLocaleString()}` : 'Not set yet';
+  } catch (_) {}
+}
+
+async function saveTrends() {
+  const secret = document.getElementById('secretInput').value.trim();
+  const trends = document.getElementById('trendTextarea').value;
+  const btn = document.getElementById('trendSaveBtn');
+  const msg = document.getElementById('trendMsg');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  msg.textContent = '';
+  msg.className = 'trend-msg';
+  try {
+    const res = await fetch(`${WORKER_URL}/trends?secret=${encodeURIComponent(secret)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trends }),
+    });
+    if (res.ok) {
+      msg.textContent = 'Saved — live immediately';
+      msg.className = 'trend-msg ok';
+      document.getElementById('trendMeta').textContent = `Last saved: ${new Date().toLocaleString()}`;
+    } else {
+      const err = await res.json().catch(() => ({}));
+      msg.textContent = err.error || `Error ${res.status}`;
+      msg.className = 'trend-msg err';
+    }
+  } catch (_) {
+    msg.textContent = 'Could not reach worker';
+    msg.className = 'trend-msg err';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Save trends';
+  setTimeout(() => { msg.textContent = ''; }, 4000);
 }
 
 // Auto-load if secret is in URL
