@@ -1,12 +1,383 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dev Environment - Poshak AI</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>poshakbyAI — drip.check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Poshak AI - Dev Environment</h1>
-    <p>This is a dummy index.html for testing live development changes.</p>
+<div class="app">
+  <header>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <!-- SVG Mark -->
+      <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+        <defs>
+          <clipPath id="hL"><rect x="0" y="0" width="22" height="44"/></clipPath>
+          <clipPath id="hR"><rect x="22" y="0" width="22" height="44"/></clipPath>
+          <clipPath id="hC"><circle cx="22" cy="22" r="19"/></clipPath>
+        </defs>
+        <circle cx="22" cy="22" r="19" fill="#1A1714" clip-path="url(#hL)"/>
+        <circle cx="22" cy="22" r="19" fill="#C84B23" clip-path="url(#hR)"/>
+        <line x1="22" y1="3" x2="22" y2="41" stroke="#F7F4EF" stroke-width="1.5" clip-path="url(#hC)"/>
+        <text x="22" y="29" font-family="Georgia,serif" font-size="22" font-weight="400" fill="#F7F4EF" text-anchor="middle">P</text>
+        <rect x="30" y="4" width="13" height="8" rx="4" fill="#F7F4EF"/>
+        <text x="36.5" y="11" font-family="Arial,sans-serif" font-size="5.5" font-weight="700" fill="#1A1714" text-anchor="middle">AI</text>
+      </svg>
+      <!-- Wordmark -->
+      <div>
+        <div style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:400;color:#1A1714;letter-spacing:-0.3px;line-height:1.1;">poshak<span style="font-family:'DM Sans',sans-serif;font-weight:400;color:#C84B23;">by</span><span style="font-family:'DM Sans',sans-serif;font-weight:500;color:#1A1714;">AI</span></div>
+        <div style="font-size:10px;color:#8C8579;letter-spacing:0.04em;font-family:'DM Sans',sans-serif;">drip<span style="color:#C84B23;">.</span>check</div>
+      </div>
+    </div>
+  </header>
+
+<input type="file" id="cameraInput" accept="image/jpeg,image/png,image/webp" capture="environment" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;z-index:-1;">
+
+  <main>
+
+    <!-- HOME SCREEN -->
+    <div class="screen active" id="screen-home">
+      <div class="home-hero">
+        <div class="home-eyebrow">✦ AI outfit scoring</div>
+        <h1 class="home-title">Outfit on.<br><em>Excuses off.</em></h1>
+        <p class="home-sub">Upload your look. Get a real score. No filter, no flattery.</p>
+      </div>
+
+      <div class="upload-zone" id="uploadZone">
+        <div class="shimmer-bar"></div>
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+        <!-- Faint body silhouette — shows ideal framing -->
+        <svg class="upload-silhouette" viewBox="0 0 120 320" xmlns="http://www.w3.org/2000/svg" fill="var(--coral)">
+          <!-- head -->
+          <ellipse cx="60" cy="28" rx="18" ry="22"/>
+          <!-- neck -->
+          <rect x="53" y="48" width="14" height="14" rx="4"/>
+          <!-- torso -->
+          <path d="M28 62 Q20 90 22 140 L98 140 Q100 90 92 62 Q76 72 60 72 Q44 72 28 62Z"/>
+          <!-- left arm -->
+          <path d="M22 68 Q6 90 10 148 Q14 152 22 150 Q24 110 32 80Z"/>
+          <!-- right arm -->
+          <path d="M98 68 Q114 90 110 148 Q106 152 98 150 Q96 110 88 80Z"/>
+          <!-- hips -->
+          <path d="M22 140 Q18 162 20 168 L100 168 Q102 162 98 140Z"/>
+          <!-- left leg -->
+          <path d="M20 168 Q14 220 16 300 Q22 306 34 304 Q38 240 50 180 L40 168Z"/>
+          <!-- right leg -->
+          <path d="M100 168 Q106 220 104 300 Q98 306 86 304 Q82 240 70 180 L80 168Z"/>
+        </svg>
+        <div class="upload-icon-wrap" style="position:relative;z-index:2;">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        </div>
+        <div class="upload-title" style="position:relative;z-index:2;">Add your photo here</div>
+        <div class="upload-sub" style="position:relative;z-index:2;">Full body · one person · JPG or PNG</div>
+      </div>
+      <button class="sample-link" onclick="loadSamplePhoto()">No photo handy? Try a sample →</button>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">or</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <label for="cameraInput" class="cam-btn">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Take a photo now
+      </label>
+
+      <div class="rules-row">
+        <span class="rule-pill">one person only</span>
+        <span class="rule-pill">full outfit in frame</span>
+        <span class="rule-pill">no heavy filters</span>
+      </div>
+
+      <div style="margin-top:1.25rem;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;color:#4A7C59;background:rgba(74,124,89,0.08);border:1px solid rgba(74,124,89,0.18);border-radius:10px;padding:10px 16px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Your photo is <strong>never stored</strong> — scored and deleted instantly.</span>
+      </div>
+    </div>
+
+    <!-- PREVIEW SCREEN -->
+    <div class="screen" id="screen-preview">
+      <div class="preview-wrap">
+        <img class="preview-img" id="previewImg" src="" alt="Your outfit">
+        <div class="preview-overlay">Looking good — ready to score?</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:0.5rem;width:100%;justify-content:center;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Full body, head to toe = best score
+      </div>
+      <button class="analyze-btn" onclick="startAnalysis()">Score my outfit →</button>
+      <button class="reupload-btn" onclick="goHome()">Choose a different photo</button>
+    </div>
+
+    <!-- PROCESSING SCREEN -->
+    <div class="screen" id="screen-processing">
+      <div class="processing-wrap">
+        <div class="spinner-wrap">
+          <div class="spinner"></div>
+        </div>
+        <div class="processing-title" id="processingTitle">Reading your fit...</div>
+        <div class="processing-sub" id="processingSub">Checking colors, proportions, and finishing touches</div>
+        <div class="processing-steps">
+          <div class="step-dot lit" id="dot0"></div>
+          <div class="step-dot" id="dot1"></div>
+          <div class="step-dot" id="dot2"></div>
+          <div class="step-dot" id="dot3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div class="screen" id="screen-result">
+      <div class="result-wrap">
+
+        <!-- Partial body notice -->
+        <div id="partialBodyNotice" style="display:none;align-items:center;gap:8px;font-size:12px;color:#7A6A2A;background:rgba(239,159,39,0.1);border:1px solid rgba(239,159,39,0.25);border-radius:10px;padding:10px 14px;margin-bottom:0.75rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>We can only see part of your outfit — a full-body shot gives a better score, but we've done our best.</span>
+        </div>
+
+        <!-- Score hero -->
+        <div class="score-hero">
+          <div class="score-sub-label">Your Style Score</div>
+          <div style="display:flex;align-items:flex-end;justify-content:center;gap:6px;line-height:1;">
+            <div class="score-number" id="scoreNum">0</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:300;color:rgba(247,244,239,0.4);padding-bottom:14px;letter-spacing:0;">/10</div>
+          </div>
+          <div class="score-label" id="scoreLabel">—</div>
+          <div><button class="share-btn" id="shareBtn" onclick="shareScore()">Share my score</button></div>
+        </div>
+
+        <!-- Dimension list -->
+        <div class="dim-list">
+          <div class="dim-item" id="dim0" onclick="toggleDim(this)">
+            <div class="dim-header">
+              <div class="dim-row-top">
+                <div class="dim-name-wrap">
+                  <div class="dim-name">Colour matching</div>
+                  <svg class="dim-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="dim-score-label" id="val0">0.0/10</div>
+              </div>
+              <div class="dim-track"><div class="dim-bar" id="bar0"></div></div>
+              <div class="dim-tap-hint"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Tap to see how to improve</div>
+            </div>
+            <div class="dim-dropdown" id="tip0">
+              <div class="dim-tip-label">How to score higher</div>
+              <div class="dim-tip-text" id="tiptext0"></div>
+            </div>
+          </div>
+
+          <div class="dim-item" id="dim1" onclick="toggleDim(this)">
+            <div class="dim-header">
+              <div class="dim-row-top">
+                <div class="dim-name-wrap">
+                  <div class="dim-name">How well it goes together</div>
+                  <svg class="dim-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="dim-score-label" id="val1">0.0/10</div>
+              </div>
+              <div class="dim-track"><div class="dim-bar" id="bar1"></div></div>
+              <div class="dim-tap-hint"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Tap to see how to improve</div>
+            </div>
+            <div class="dim-dropdown" id="tip1">
+              <div class="dim-tip-label">How to score higher</div>
+              <div class="dim-tip-text" id="tiptext1"></div>
+            </div>
+          </div>
+
+          <div class="dim-item" id="dim2" onclick="toggleDim(this)">
+            <div class="dim-header">
+              <div class="dim-row-top">
+                <div class="dim-name-wrap">
+                  <div class="dim-name">Effort &amp; finishing</div>
+                  <svg class="dim-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="dim-score-label" id="val2">0.0/10</div>
+              </div>
+              <div class="dim-track"><div class="dim-bar" id="bar2"></div></div>
+              <div class="dim-tap-hint"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Tap to see how to improve</div>
+            </div>
+            <div class="dim-dropdown" id="tip2">
+              <div class="dim-tip-label">How to score higher</div>
+              <div class="dim-tip-text" id="tiptext2"></div>
+            </div>
+          </div>
+
+          <div class="dim-item" id="dim3" onclick="toggleDim(this)">
+            <div class="dim-header">
+              <div class="dim-row-top">
+                <div class="dim-name-wrap">
+                  <div class="dim-name">Fit &amp; shape</div>
+                  <svg class="dim-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="dim-score-label" id="val3">0.0/10</div>
+              </div>
+              <div class="dim-track"><div class="dim-bar" id="bar3"></div></div>
+              <div class="dim-tap-hint"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Tap to see how to improve</div>
+            </div>
+            <div class="dim-dropdown" id="tip3">
+              <div class="dim-tip-label">How to score higher</div>
+              <div class="dim-tip-text" id="tiptext3"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback -->
+        <div class="feedback-section" id="feedbackSection">
+
+          <div class="vibe-block" id="vibeCard">
+            <div class="vibe-icon" id="vibeIcon">✦</div>
+            <div class="vibe-right">
+              <div class="vibe-tag">The verdict</div>
+              <div class="vibe-quote" id="vibeText"></div>
+            </div>
+          </div>
+
+          <div class="working-block" id="workingCard">
+            <div class="working-top">
+              <div class="working-dot"></div>
+              <div class="working-label">What's working</div>
+            </div>
+            <div class="working-text" id="workingText"></div>
+          </div>
+
+          <div class="nudge-block" id="nudgeCard" style="display:none;">
+            <div class="nudge-arrow">→</div>
+            <div class="nudge-inner-text">
+              <div class="nudge-label">Fix this one thing</div>
+              <div class="nudge-text" id="nudgeText"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="action-row" style="display:flex; gap:10px;">
+          <button class="action-sec" style="flex:1;" onclick="goHome()">Score another</button>
+          <button class="action-primary" style="flex:1;" onclick="showScreen('feedback')">Give feedback →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK SCREEN -->
+    <div class="screen" id="screen-feedback">
+      <div class="feedback-wrap" id="feedbackForm">
+
+        <div class="fb-screen-title">Quick check-in</div>
+        <div class="fb-screen-sub">Tell us what you think — we actually read all of this.</div>
+
+        <div class="fb-section">
+          <div class="fb-section-label">How helpful was this?</div>
+          <div class="emoji-row">
+            <button class="emoji-btn" onclick="selectEmoji(this, 1)">😒</button>
+            <button class="emoji-btn" onclick="selectEmoji(this, 2)">😐</button>
+            <button class="emoji-btn" onclick="selectEmoji(this, 3)">🙂</button>
+            <button class="emoji-btn" onclick="selectEmoji(this, 4)">😊</button>
+            <button class="emoji-btn" onclick="selectEmoji(this, 5)">😍</button>
+          </div>
+        </div>
+
+        <div class="fb-section">
+          <div class="fb-section-label">What did you think?</div>
+          <div class="chip-grid" id="thoughtChips">
+            <div class="chip" onclick="toggleChip(this)">Really helpful</div>
+            <div class="chip" onclick="toggleChip(this)">Too general</div>
+            <div class="chip" onclick="toggleChip(this)">Spot on</div>
+            <div class="chip" onclick="toggleChip(this)">Want more detail</div>
+            <div class="chip" onclick="toggleChip(this)">Easy to follow</div>
+            <div class="chip" onclick="toggleChip(this)">Felt too harsh</div>
+          </div>
+        </div>
+
+        <div class="fb-section">
+          <div class="fb-section-label">What should we improve?</div>
+          <div class="chip-grid" id="improveChips">
+            <div class="chip" onclick="toggleChip(this)">More specific tips</div>
+            <div class="chip" onclick="toggleChip(this)">Better tone</div>
+            <div class="chip" onclick="toggleChip(this)">Show examples</div>
+            <div class="chip" onclick="toggleChip(this)">Add shopping links</div>
+            <div class="chip" onclick="toggleChip(this)">Faster results</div>
+            <div class="chip" onclick="toggleChip(this)">Nothing, loved it</div>
+          </div>
+        </div>
+
+        <div class="fb-section">
+          <div class="fb-section-label">Anything else? <span style="font-weight:300;text-transform:none;letter-spacing:0;">(optional)</span></div>
+          <textarea class="fb-textarea" id="fbTextarea" placeholder="Any quick thoughts? We read all of them."></textarea>
+        </div>
+
+        <button class="fb-submit" onclick="submitFeedback()">Submit feedback</button>
+        <button class="fb-skip" onclick="goHome()">Skip — score another outfit</button>
+
+      </div>
+
+      <!-- Thank you state -->
+      <div style="display:none;" id="thankyouState">
+        <div class="thankyou-wrap">
+          <div class="thankyou-icon">✦</div>
+          <div class="thankyou-title">Thank you.</div>
+          <div class="thankyou-sub">Your feedback helps us get better.<br>One outfit at a time.</div>
+          <button class="action-primary" style="width:100%;" onclick="goHome()">Score another outfit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR SCREEN -->
+    <div class="screen" id="screen-error">
+      <div class="error-wrap">
+        <div class="error-icon">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v3M11 14h.01"/></svg>
+        </div>
+        <div class="error-title" id="errorTitle">Hmm, we can't score this.</div>
+        <div class="error-sub" id="errorSub">We need a clear photo of your full outfit to give you a proper score.</div>
+        <div class="error-rules">
+          <div class="error-rule"><div class="rule-dot-sm"></div>Only one person in the photo</div>
+          <div class="error-rule"><div class="rule-dot-sm"></div>Full or half-body shot with outfit visible</div>
+          <div class="error-rule"><div class="rule-dot-sm"></div>No heavy filters or cropping</div>
+          <div class="error-rule"><div class="rule-dot-sm"></div>Good lighting, clothes clearly visible</div>
+        </div>
+        <button class="retry-btn" onclick="goHome()">Try again</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- NEW LOOK MODAL -->
+<div class="newlook-overlay" id="newlookOverlay" onclick="closeNewLook(event)">
+  <div class="newlook-sheet" id="newlookSheet">
+    <div class="newlook-handle"></div>
+    <div class="newlook-label">AI Preview</div>
+    <div class="newlook-title" id="newlookTitle">You, with the fix applied</div>
+    <div class="newlook-img-wrap" id="newlookImgWrap">
+      <div class="newlook-loading" id="newlookLoading">
+        <div class="newlook-spinner"></div>
+        <div class="newlook-loading-text">Generating your new look...</div>
+      </div>
+    </div>
+    <div class="newlook-disclaimer">AI-generated preview — for inspiration only. Results may vary.</div>
+    <button class="newlook-close" onclick="closeNewLook()">Close</button>
+  </div>
+</div>
+
+
+<!-- ACCESSORY TRY-ON MODAL -->
+<div class="newlook-overlay" id="accessoryOverlay" onclick="closeAccessoryOverlay(event)">
+  <div class="newlook-sheet">
+    <div class="newlook-handle"></div>
+    <div class="newlook-label">Try it on</div>
+    <div class="newlook-title" id="accessoryOverlayTitle">How it could look</div>
+    <div class="newlook-img-wrap" id="accessoryImgWrap"></div>
+    <div class="newlook-disclaimer">AI-generated preview — your original photo with the item added. Results may vary.</div>
+    <button class="newlook-close" onclick="closeAccessoryOverlay()">Close</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="prompts.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
