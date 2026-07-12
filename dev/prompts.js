@@ -231,7 +231,7 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"weekend autopilot",
 "vibe_line":"classic casuals missing the final layer of polish",
 "whats_working":"The brown suede chukka boots add a welcome touch of tactile texture to an otherwise flat outfit.",
-"nudge":"Tuck in the gingham shirt and add a brown leather belt to instantly define the waistline.",
+"nudge":"Add a watch to complete the look.",
 "image_prompt":"man wearing red and blue gingham shirt tucked in, grey slim-fit jeans, brown leather belt, brown suede chukka boots, smart casual, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus",
 "tips":{
   "color_harmony":"The cool grey denim dulls the vibrant gingham; a rich navy chino would create a sharper, more deliberate contrast.",
@@ -283,7 +283,7 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "vibe_line":"a mix of formalities that never quite settles",
 "whats_working":"The brown suede chukka boots and matching belt show a basic understanding of accessory coordination.",
 "nudge":"Swap the bold gingham shirt for a solid navy polo to match the casual energy of the grey jeans.",
-"image_prompt":"man wearing solid navy short-sleeve polo shirt tucked in, slim-fit grey jeans, dark brown leather belt, brown suede chukka boots, casual, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus",
+"image_prompt":"plump man wearing solid navy short-sleeve polo shirt tucked in, slim-fit grey jeans, dark brown leather belt, brown suede chukka boots, casual, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus",
 "tips":{
   "color_harmony":"The bold primary colours of the gingham shirt overpower the muted grey jeans; a solid navy top would balance the tones.",
   "outfit_cohesion":"The structured, almost preppy check shirt fights against the very casual, faded grey denim.",
