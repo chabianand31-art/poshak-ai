@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poshak AI — Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --coral: #D85A30; --coral-light: #FAECE7; --coral-mid: #F5C4B3;
+    --ink: #1A1714; --ink-soft: #3D3830; --parchment: #F7F4EF;
+    --parchment-dark: #EDE9E1; --muted: #8C8579; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: linear-gradient(160deg, #FDF9F5 0%, #F7F0E8 50%, #FDF4EF 100%);
+    min-height: 100vh; color: var(--ink); padding: 2rem 1.5rem;
+  }
+  .wrap { max-width: 540px; margin: 0 auto; }
+  .title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 400; margin-bottom: 4px;
+  }
+  .sub { font-size: 14px; color: var(--muted); margin-bottom: 2rem; }
+  .gate { display: flex; gap: 10px; margin-bottom: 2rem; }
+  .gate input {
+    flex: 1; padding: 12px 14px; border-radius: 10px;
+    border: 1.5px solid rgba(26,23,20,0.12); background: var(--white);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink);
+    outline: none;
+  }
+  .gate input:focus { border-color: var(--coral); }
+  .gate button {
+    padding: 12px 22px; border-radius: 10px;
+    background: linear-gradient(135deg, #D85A30, #C84B23);
+    color: #fff; border: none; font-size: 14px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    box-shadow: 0 3px 12px rgba(216,90,48,0.3);
+  }
+  .gate button:hover { filter: brightness(1.07); }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card {
+    background: var(--white); border-radius: 16px;
+    border: 1px solid rgba(26,23,20,0.07);
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .card-label {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px; font-weight: 500;
+  }
+  .card-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px; font-weight: 400; color: var(--coral); line-height: 1;
+  }
+  .card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .error { font-size: 14px; color: #A32D2D; margin-top: 1rem; }
+  .refresh {
+    margin-top: 1.5rem; font-size: 13px; color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .refresh button {
+    background: none; border: none; color: var(--coral);
+    font-size: 13px; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  #stats { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">Analytics</div>
+  <div class="sub">poshakbyAI — visitor & scoring stats</div>
+
+  <div class="gate">
+    <input type="password" id="secretInput" placeholder="Enter analytics secret" />
+    <button onclick="load()">View</button>
+  </div>
+
+  <div id="stats">
+    <div class="cards">
+      <div class="card">
+        <div class="card-label">Total visitors</div>
+        <div class="card-value" id="totalUsers">—</div>
+        <div class="card-sub">unique devices</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Returning visitors</div>
+        <div class="card-value" id="returningUsers">—</div>
+        <div class="card-sub">came back at least once</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Total visits</div>
+        <div class="card-value" id="totalVisits">—</div>
+        <div class="card-sub">page loads</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Outfits scored</div>
+        <div class="card-value" id="totalScores">—</div>
+        <div class="card-sub">images analysed</div>
+      </div>
+    </div>
+    <div class="refresh">
+      Last refreshed: <span id="refreshedAt">—</span>
+      <button onclick="load()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="error" id="errorMsg"></div>
+</div>
+
+<script>
+const WORKER_URL = 'https://poshak-proxy.chabianand31.workers.dev';
+
+// Auto-fill secret from URL param ?secret=...
+const params = new URLSearchParams(location.search);
+if (params.get('secret')) document.getElementById('secretInput').value = params.get('secret');
+
+async function load() {
+  const secret = document.getElementById('secretInput').value.trim();
+  document.getElementById('errorMsg').textContent = '';
+  if (!secret) { document.getElementById('errorMsg').textContent = 'Enter the analytics secret.'; return; }
+
+  try {
+    const res = await fetch(`${WORKER_URL}/analytics?secret=${encodeURIComponent(secret)}`);
+    if (res.status === 401) { document.getElementById('errorMsg').textContent = 'Wrong secret.'; return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      document.getElementById('errorMsg').textContent = err.error || `Error ${res.status}`;
+      return;
+    }
+    const data = await res.json();
+    document.getElementById('totalUsers').textContent    = (data.totalUsers    ?? 0).toLocaleString();
+    document.getElementById('returningUsers').textContent = (data.returningUsers ?? 0).toLocaleString();
+    document.getElementById('totalVisits').textContent   = (data.totalVisits   ?? 0).toLocaleString();
+    document.getElementById('totalScores').textContent   = (data.totalScores   ?? 0).toLocaleString();
+    document.getElementById('refreshedAt').textContent   = new Date().toLocaleTimeString();
+    document.getElementById('stats').style.display = 'block';
+  } catch (err) {
+    document.getElementById('errorMsg').textContent = 'Could not reach the worker. Check your connection.';
+  }
+}
+
+// Auto-load if secret is in URL
+if (params.get('secret')) load();
+</script>
+</body>
+</html>
