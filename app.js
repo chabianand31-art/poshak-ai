@@ -270,13 +270,8 @@ document.getElementById('cameraInput').addEventListener('change', (e) => {
   handleImage(e.target.files[0]);
 });
 
-// Upload zone click
-document.getElementById('uploadZone').addEventListener('click', () => {
-  document.getElementById('fileInput').click();
-});
-
-// Drag and drop
-const zone = document.getElementById('uploadZone');
+// Drag and drop on entire home screen
+const zone = document.getElementById('screen-home');
 zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
 zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
 zone.addEventListener('drop', (e) => {
@@ -607,7 +602,7 @@ function buildShareCaption() {
   if (!currentShareData) return '';
   const score = currentShareData.score.toFixed(1);
   const label = currentShareData.label || '';
-  return `Got my drip.check ✨\n\nScore: ${score}/10 — "${label}"\n\nRate yours → poshakbyai.com\n\n#poshakbyai #PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
+  return `Dress Better. Daily. ✨\n\nScore: ${score}/10 — "${label}"\n\nRate yours → poshakbyai.com\n\n#poshakbyai #PoshakAI #OOTD #OutfitCheck #StyleScore #DressBetterDaily`;
 }
 
 async function generateShareCard() {
@@ -699,7 +694,7 @@ async function shareScore() {
     if (navigator.canShare({ files: [testFile] })) {
       try {
         await navigator.share({
-          title: 'poshakbyAI — drip.check',
+          title: 'PoshakByAI — Dress Better. Daily.',
           text: caption,
           files: [testFile]
         });

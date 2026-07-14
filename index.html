@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>poshakbyAI — drip.check</title>
+<title>PoshakByAI — Dress Better. Daily.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
@@ -29,7 +29,7 @@
       <!-- Wordmark -->
       <div>
         <div style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:400;color:#1A1714;letter-spacing:-0.3px;line-height:1.1;">poshak<span style="font-family:'DM Sans',sans-serif;font-weight:400;color:#C84B23;">by</span><span style="font-family:'DM Sans',sans-serif;font-weight:500;color:#1A1714;">AI</span></div>
-        <div style="font-size:10px;color:#8C8579;letter-spacing:0.04em;font-family:'DM Sans',sans-serif;">drip<span style="color:#C84B23;">.</span>check</div>
+        <div style="font-size:10px;color:#8C8579;letter-spacing:0.04em;font-family:'DM Sans',sans-serif;">Dress Better<span style="color:#C84B23;">.</span> Daily<span style="color:#C84B23;">.</span></div>
       </div>
     </div>
   </header>
@@ -40,62 +40,136 @@
 
     <!-- HOME SCREEN -->
     <div class="screen active" id="screen-home">
-      <div class="home-hero">
-        <div class="home-eyebrow">✦ AI outfit scoring</div>
-        <h1 class="home-title">Outfit on.<br><em>Excuses off.</em></h1>
-        <p class="home-sub">Upload your look. Get a real score. No filter, no flattery.</p>
-      </div>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
 
-      <div class="upload-zone" id="uploadZone">
-        <div class="shimmer-bar"></div>
-        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
-        <!-- Faint body silhouette — shows ideal framing -->
-        <svg class="upload-silhouette" viewBox="0 0 120 320" xmlns="http://www.w3.org/2000/svg" fill="var(--coral)">
-          <!-- head -->
-          <ellipse cx="60" cy="28" rx="18" ry="22"/>
-          <!-- neck -->
-          <rect x="53" y="48" width="14" height="14" rx="4"/>
-          <!-- torso -->
-          <path d="M28 62 Q20 90 22 140 L98 140 Q100 90 92 62 Q76 72 60 72 Q44 72 28 62Z"/>
-          <!-- left arm -->
-          <path d="M22 68 Q6 90 10 148 Q14 152 22 150 Q24 110 32 80Z"/>
-          <!-- right arm -->
-          <path d="M98 68 Q114 90 110 148 Q106 152 98 150 Q96 110 88 80Z"/>
-          <!-- hips -->
-          <path d="M22 140 Q18 162 20 168 L100 168 Q102 162 98 140Z"/>
-          <!-- left leg -->
-          <path d="M20 168 Q14 220 16 300 Q22 306 34 304 Q38 240 50 180 L40 168Z"/>
-          <!-- right leg -->
-          <path d="M100 168 Q106 220 104 300 Q98 306 86 304 Q82 240 70 180 L80 168Z"/>
-        </svg>
-        <div class="upload-icon-wrap" style="position:relative;z-index:2;">
-          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      <div class="hero-layout">
+
+        <!-- LEFT: copy + features + CTA -->
+        <div class="hero-left">
+          <div class="home-eyebrow">✦ Your Daily Style Partner</div>
+
+          <h1 class="home-title">Your outfit,<br><em>Better, every day.</em></h1>
+
+          <p class="home-sub">Real feedback. Personal tips.<br>More <strong>confidence</strong> in every look.</p>
+
+          <!-- Three features -->
+          <div class="feature-row">
+            <div class="feature-item">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="15" rx="2"/><path d="M16 2l2 4H6l2-4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+              </div>
+              <div class="feature-label">Snap</div>
+              <div class="feature-desc">Upload your look in seconds.</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              </div>
+              <div class="feature-label">Get Feedback</div>
+              <div class="feature-desc">Honest inputs that help you improve.</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div class="feature-label">Look Better</div>
+              <div class="feature-desc">Actionable tips to level up your style.</div>
+            </div>
+          </div>
+
+          <!-- Primary CTA -->
+          <button class="home-cta" onclick="document.getElementById('fileInput').click()">
+            Check Your Look
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+
+          <!-- Secondary: camera -->
+          <label for="cameraInput" class="home-cta-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Take a photo instead
+          </label>
+
+          <!-- Privacy + sample -->
+          <div class="home-footer-row">
+            <span class="privacy-note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Private. Secure. Just for you.
+            </span>
+            <button class="sample-link" onclick="loadSamplePhoto()">Try a sample →</button>
+          </div>
         </div>
-        <div class="upload-title" style="position:relative;z-index:2;">Add your photo here</div>
-        <div class="upload-sub" style="position:relative;z-index:2;">Full body · one person · JPG or PNG</div>
-      </div>
-      <button class="sample-link" onclick="loadSamplePhoto()">No photo handy? Try a sample →</button>
 
-      <div class="divider">
-        <div class="divider-line"></div>
-        <div class="divider-text">or</div>
-        <div class="divider-line"></div>
-      </div>
+        <!-- RIGHT: overlapping fashion collage + phone -->
+        <div class="hero-right">
 
-      <label for="cameraInput" class="cam-btn">
-        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        Take a photo now
-      </label>
+          <!-- Collage images -->
+          <img class="himg himg-1"
+            src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&q=85&fit=crop&crop=top"
+            alt="" loading="lazy">
+          <img class="himg himg-2"
+            src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&q=85&fit=crop&crop=top"
+            alt="" loading="lazy">
+          <img class="himg himg-3"
+            src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&q=85&fit=crop&crop=center"
+            alt="" loading="lazy">
 
-      <div class="rules-row">
-        <span class="rule-pill">one person only</span>
-        <span class="rule-pill">full outfit in frame</span>
-        <span class="rule-pill">no heavy filters</span>
-      </div>
+          <!-- Phone mockup -->
+          <div class="hero-phone-wrap">
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <div class="phone-header">
+                  <svg width="14" height="14" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+                    <defs>
+                      <clipPath id="pL"><rect x="0" y="0" width="22" height="44"/></clipPath>
+                      <clipPath id="pR"><rect x="22" y="0" width="22" height="44"/></clipPath>
+                      <clipPath id="pC"><circle cx="22" cy="22" r="19"/></clipPath>
+                    </defs>
+                    <circle cx="22" cy="22" r="19" fill="#1A1714" clip-path="url(#pL)"/>
+                    <circle cx="22" cy="22" r="19" fill="#C84B23" clip-path="url(#pR)"/>
+                    <line x1="22" y1="3" x2="22" y2="41" stroke="#F7F4EF" stroke-width="2" clip-path="url(#pC)"/>
+                    <text x="22" y="29" font-family="Georgia,serif" font-size="22" font-weight="400" fill="#F7F4EF" text-anchor="middle">P</text>
+                  </svg>
+                  <span>Here's your look</span>
+                </div>
+                <div class="phone-score-wrap">
+                  <div class="phone-score-num">8.4</div>
+                  <div class="phone-score-label">Great look!</div>
+                </div>
+                <div class="phone-bars">
+                  <div class="phone-bar-row">
+                    <span>Fit</span>
+                    <div class="phone-bar-track"><div class="phone-bar-fill" style="width:84%"></div></div>
+                    <span>8.4</span>
+                  </div>
+                  <div class="phone-bar-row">
+                    <span>Colour</span>
+                    <div class="phone-bar-track"><div class="phone-bar-fill" style="width:88%"></div></div>
+                    <span>8.8</span>
+                  </div>
+                  <div class="phone-bar-row">
+                    <span>Style</span>
+                    <div class="phone-bar-track"><div class="phone-bar-fill" style="width:80%"></div></div>
+                    <span>8.0</span>
+                  </div>
+                  <div class="phone-bar-row">
+                    <span>Finish</span>
+                    <div class="phone-bar-track"><div class="phone-bar-fill" style="width:76%"></div></div>
+                    <span>7.6</span>
+                  </div>
+                </div>
+                <div class="phone-tip">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="9" height="9"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  Try adding a slim belt to anchor the whole look
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div style="margin-top:1.25rem;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;color:#4A7C59;background:rgba(74,124,89,0.08);border:1px solid rgba(74,124,89,0.18);border-radius:10px;padding:10px 16px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span>Your photo is <strong>never stored</strong> — scored and deleted instantly.</span>
+          <!-- Handwritten note -->
+          <div class="handwritten-note">Small changes<br>big difference</div>
+        </div>
+
       </div>
     </div>
 
