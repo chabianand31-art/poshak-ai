@@ -213,26 +213,16 @@ export default {
     // ─────────────────────────────────────────────
     if (url.pathname === '/transform') {
       try {
-        const { prompt, imageBase64 } = await request.json();
+        const { prompt } = await request.json();
 
         if (!prompt) return json({ error: 'prompt is required' }, 400);
 
-        let aiModel = '@cf/black-forest-labs/flux-1-schnell';
-        let aiPayload = { prompt, num_steps: 8, width: 768, height: 1024 };
-
-        if (imageBase64) {
-          const imageBytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
-          aiModel = '@cf/runwayml/stable-diffusion-v1-5-img2img';
-          aiPayload = {
-            prompt,
-            image: [...imageBytes],
-            strength: 0.8,
-            guidance: 7.5,
-            num_steps: 20
-          };
-        }
-
-        const result = await env.AI.run(aiModel, aiPayload);
+        const result = await env.AI.run('@cf/black-forest-labs/flux-1-schnell', {
+          prompt,
+          num_steps: 8,
+          width:     768,
+          height:    1024,
+        });
 
         // Flux returns base64-encoded PNG — decode to binary
         const imageData = result.image
