@@ -434,7 +434,8 @@ async function generateLookImage(wrap) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: currentImagePrompt + ', fashion editorial, highly detailed, photorealistic, studio lighting, clean background'
+        prompt: currentImagePrompt + ', fashion editorial, highly detailed, photorealistic, studio lighting, clean background',
+        imageBase64: currentImageBase64
       }),
       signal: controller.signal
     });
@@ -630,10 +631,13 @@ async function generateAccessoryImage(wrap, tipText, accessoryLabel, observation
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120000); // gpt-image-1 can take up to ~90s
 
-    const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.ACCESSORY, {
+    const basePrompt = currentImagePrompt || observation;
+    const prompt = `${basePrompt}, wearing ${accessoryLabel}, fashion editorial, highly detailed, photorealistic, studio lighting, clean background`;
+
+    const res = await fetch(CONFIG.WORKER_URL + CONFIG.ENDPOINTS.TRANSFORM, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: currentImageBase64, accessoryLabel }),
+      body: JSON.stringify({ prompt, imageBase64: currentImageBase64 }),
       signal: controller.signal,
     });
 
