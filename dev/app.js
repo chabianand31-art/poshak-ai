@@ -257,7 +257,7 @@ function getPillClass(score) {
 function displayResult(result) {
   showScreen('result');
 
-  const { scores, label, vibe_line, whats_working, nudge, tips, image_prompt, partial_body, shoes_visible, observation } = result;
+  const { scores, label, vibe_line, whats_working, tips, image_prompt, partial_body, shoes_visible, observation } = result;
   currentImagePrompt = image_prompt || null;
   const total = scores.total;
 
@@ -356,7 +356,11 @@ function displayResult(result) {
 
   const nudgeCard = document.getElementById('nudgeCard');
   const shoeWords = /\b(shoes?|footwear|loafers?|heels?|sneakers?|socks?|sandals?|boots?|flats?|pumps?|stilettos?)\b/i;
-  const safeNudge = (shoes_visible === false && nudge && shoeWords.test(nudge)) ? null : nudge;
+  
+  const dimKeys = ['color_harmony', 'outfit_cohesion', 'intentionality', 'silhouette'];
+  const computedNudge = tips ? tips[dimKeys[lowestIdx]] : null;
+  const safeNudge = (shoes_visible === false && computedNudge && shoeWords.test(computedNudge)) ? null : computedNudge;
+  
   if (safeNudge && total < 80) {
     nudgeCard.style.display = 'flex';
     document.getElementById('nudgeText').textContent = safeNudge;
