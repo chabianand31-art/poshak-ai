@@ -261,6 +261,11 @@ function displayResult(result) {
   currentImagePrompt = image_prompt || null;
   const total = scores.total;
 
+  const resultImg = document.getElementById('resultImg');
+  if (resultImg && currentImageBase64) {
+    resultImg.src = `data:${currentMediaType};base64,${currentImageBase64}`;
+  }
+
   // Show partial body notice if applicable
   const partialNotice = document.getElementById('partialBodyNotice');
   partialNotice.style.display = partial_body ? 'flex' : 'none';
