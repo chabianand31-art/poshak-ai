@@ -181,6 +181,114 @@ These show correct scoring calibration and feedback voice. Match this tone and r
   "intentionality":"The scattered sequins are a beautiful touch; adding a vintage bronze brooch to the stole would elevate the formality.",
   "silhouette":"The knee-length sherwani is perfectly tailored; tapering the dark trousers slightly more at the ankle would sharpen the profile."
 },
+"fingerprint":[]}
+
+// Example 1: Female Outfit (Printed Kurti - from your image)
+{"scoreable":true,"partial_body":false,"shoes_visible":true,
+"observation":"White three-quarter sleeve kurti with butterfly and geometric print. Black leggings. Black open-toe block heel mules. No visible jewelry, no belt, no bag.",
+"occasion": "casual_everyday",
+"occasion_evidence": "Basic printed kurti and cotton leggings signal everyday casual wear.",
+"scores":{"color_harmony":15,"outfit_cohesion":18,"intentionality":10,"silhouette":12,"total":55},
+"label":"casual kurti ease",
+"vibe_line":"a simple, functional outfit with a clear ethnic influence",
+"whats_working":"The black leggings and black mules provide a consistent, grounding dark base for the printed kurti.",
+"image_prompt":null,
+"tips":{
+  "color_harmony":"The white and black is functional, but a maroon or mustard dupatta would introduce a much-needed third tone.",
+  "outfit_cohesion":"The pieces work together fundamentally, but a structured tan tote would elevate it from home-wear to day-wear.",
+  "intentionality":"The look feels incomplete; adding oxidized silver jhumkas would provide necessary styling intention.",
+  "silhouette":"The straight-cut kurti over leggings is a standard silhouette; a slight cinch at the waist would define the shape better."
+},
+"fingerprint":[]}
+
+// Example 2: Male Outfit (Gingham Shirt & Jeans - from your image)
+{"scoreable":true,"partial_body":false,"shoes_visible":true,
+"observation":"Long-sleeved button-down shirt with red, white, and blue gingham check pattern. Tucked into slim-fit grey denim jeans. Dark brown leather belt with silver buckle, brown suede chukka boots. No visible accessories.",
+"occasion": "casual_everyday",
+"occasion_evidence": "Gingham shirt and grey denim suggest a relaxed, everyday smart-casual approach.",
+"scores":{"color_harmony":14,"outfit_cohesion":13,"intentionality":11,"silhouette":12,"total":50},
+"label":"functional friday casual",
+"vibe_line":"standard office casual lacking a clear point of view",
+"whats_working":"Tucking in the shirt and adding a belt shows a basic level of grooming and neatness.",
+"image_prompt":"man wearing solid navy blue button-down shirt tucked into slim-fit grey denim jeans, brown leather belt, clean white leather sneakers, casual silver wristwatch, casual_everyday, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus",
+"tips":{
+  "color_harmony":"The red/blue gingham clashes slightly with the cool grey denim; swapping to a solid navy shirt would instantly harmonize the palette.",
+  "outfit_cohesion":"The brown suede chukkas feel a bit rugged for the preppy gingham shirt; clean white leather sneakers would bridge the gap better.",
+  "intentionality":"The outfit is purely functional; a casual leather-strap watch and rolling the sleeves would signal actual styling effort.",
+  "silhouette":"The jeans bunch slightly at the ankles; a hem or a small cuff would create a cleaner break above the boots."
+},
+"fingerprint":[]}
+
+// Example 3: Male Outfit (Tech Bro Casual - low effort)
+{"scoreable":true,"partial_body":false,"shoes_visible":true,
+"observation":"Faded black graphic t-shirt worn untucked. Light blue washed straight-leg denim jeans. Grey and neon green athletic running shoes. No accessories, no belt visible.",
+"occasion": "casual_everyday",
+"occasion_evidence": "Graphic tee and athletic running shoes are classic off-duty or tech-casual markers.",
+"scores":{"color_harmony":10,"outfit_cohesion":11,"intentionality":9,"silhouette":10,"total":40},
+"label":"weekend errand run",
+"vibe_line":"clothes worn for utility rather than expression",
+"whats_working":"The light blue denim provides a standard, completely neutral base that doesn't actively offend.",
+"image_prompt":"man wearing fitted solid black crewneck t-shirt, dark indigo straight-leg jeans, minimalist white sneakers, casual_everyday, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus",
+"tips":{
+  "color_harmony":"The neon green on the running shoes disrupts the otherwise muted black and blue palette; switch to minimalist white sneakers.",
+  "outfit_cohesion":"Athletic running shoes belong in the gym; a classic canvas or leather sneaker would bring cohesion to the denim.",
+  "intentionality":"There is zero visible styling here; adding a simple silver chain or a casual watch would show some effort.",
+  "silhouette":"The faded t-shirt looks boxy and the jeans lack structure; opting for a slightly more fitted, solid-color tee would immediately improve proportions."
+},
+"fingerprint":[]}
+
+// Example 4: Female Outfit (Average Office Wear)
+{"scoreable":true,"partial_body":false,"shoes_visible":true,
+"observation":"Light blue plain button-down shirt, untucked. Black skinny trousers. Black leather ballet flats. Black nylon shoulder bag. Small silver stud earrings.",
+"occasion": "office_formal",
+"occasion_evidence": "Button-down shirt and black trousers clearly signal a standard corporate office environment.",
+"scores":{"color_harmony":15,"outfit_cohesion":16,"intentionality":14,"silhouette":13,"total":58},
+"label":"the daily commute",
+"vibe_line":"safe, corporate dressing playing by the rules",
+"whats_working":"The black trousers, flats, and bag create an easy, unified dark base that is perfectly office-appropriate.",
+"image_prompt":null,
+"tips":{
+  "color_harmony":"Light blue and black is a safe corporate default; swapping the black flats for a burgundy loafer would inject personality.",
+  "outfit_cohesion":"The nylon shoulder bag feels a bit too casual for the button-down; a structured leather tote would look more professional.",
+  "intentionality":"The small silver studs are a start, but adding a sleek silver watch would complete the office narrative.",
+  "silhouette":"Leaving the shirt untucked over skinny trousers cuts the leg line awkwardly; a French tuck would instantly restore proportion."
+},
+"fingerprint":[]}
+
+// Example 5: Male Outfit (Elevated Street Casual)
+{"scoreable":true,"partial_body":false,"shoes_visible":true,
+"observation":"Oversized heavyweight cream t-shirt, half-tucked. Olive green wide-leg cargo pants. Crisp white chunky sneakers. Black canvas crossbody bag, silver chain necklace.",
+"occasion": "going_out_street",
+"occasion_evidence": "Oversized proportions, cargo pants, and crossbody bag point directly to contemporary streetwear.",
+"scores":{"color_harmony":17,"outfit_cohesion":18,"intentionality":16,"silhouette":18,"total":69},
+"label":"urban utility",
+"vibe_line":"relaxed streetwear that understands volume and proportion",
+"whats_working":"The half-tuck of the oversized cream tee perfectly balances the volume of the wide-leg olive cargo pants.",
+"image_prompt":null,
+"tips":{
+  "color_harmony":"Cream and olive is a great earthy mix; swapping the black crossbody bag for a tan one would keep the tones perfectly cohesive.",
+  "outfit_cohesion":"The chunky white sneakers anchor the wide pants beautifully, but ensuring the tee has a thick collar band would match the cargo's ruggedness.",
+  "intentionality":"The silver chain is excellent; adding a couple of silver rings would push the streetwear styling even further.",
+  "silhouette":"The volume play is working well; pulling the cargo pants slightly higher on the waist would lengthen the legs."
+},
+"fingerprint":[]}
+
+// Example 6: Female Outfit (Incomplete Ethnic Wear)
+{"scoreable":true,"partial_body":false,"shoes_visible":true,
+"observation":"Solid emerald green sleeveless Anarkali suit. Matching green churidar leggings. No dupatta. Gold wedge heels. Delicate gold chain pendant, small gold stud earrings.",
+"occasion": "wedding_festive",
+"occasion_evidence": "The emerald Anarkali and gold wedges strongly suggest a festive or pre-wedding event.",
+"scores":{"color_harmony":16,"outfit_cohesion":15,"intentionality":14,"silhouette":16,"total":61},
+"label":"emerald half-measure",
+"vibe_line":"beautiful color story waiting for its finishing touches",
+"whats_working":"The monochrome emerald green creates a striking, unbroken vertical line that is deeply flattering.",
+"image_prompt":null,
+"tips":{
+  "color_harmony":"The emerald and gold pairing is classic; a sheer ivory dupatta with a gold border would provide a beautiful, lightening contrast.",
+  "outfit_cohesion":"The gold wedge heels feel a bit dated; swapping them for intricate gold metallic stilettos or embroidered juttis would modernize the look.",
+  "intentionality":"An Anarkali without a dupatta often looks incomplete; draping one over one shoulder would finalize the festive intention.",
+  "silhouette":"The fit of the Anarkali is excellent; ensuring the churidar gathers tightly purely at the ankle would maximize the traditional elegance."
+},
 "fingerprint":[]}`;
 
 const SYSTEM_PROMPT = `You are a Principal Fashion Designer and Creative Director with 20+ years in luxury Indian and contemporary fashion — think the design sensibility of Sabyasachi, the editorial sharpness of Manish Malhotra's atelier, and the street-smart trend awareness of a Vogue India stylist. You have dressed celebrities, judged design collections, and can read an outfit the way a novelist reads a sentence. You give feedback that is specific, authoritative, classy, and genuinely useful. You do not flatter. You do not vague-out. Every comment you make could be quoted in a magazine.

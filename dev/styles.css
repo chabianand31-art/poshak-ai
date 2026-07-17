@@ -408,9 +408,10 @@
     border: 1px solid rgba(216,90,48,0.12);
     display: flex;
     align-items: stretch;
+    max-height: 300px;
   }
   .score-hero-img-wrap {
-    width: 33.333%;
+    width: 40%;
     position: relative;
     border-right: 1px solid rgba(255,255,255,0.05);
   }
@@ -421,7 +422,7 @@
     display: block;
   }
   .score-hero-content {
-    width: 66.666%;
+    width: 60%;
     padding: 2.25rem 1rem 1.75rem;
     text-align: center;
     position: relative;
