@@ -12,7 +12,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"trench coat geometry",
 "vibe_line":"effortless polish with zero visible effort",
 "whats_working":"The fluid navy camisole against the structured beige trench creates perfect textural tension.",
-"nudge":null,
 "image_prompt":null,
 "tips":{
   "color_harmony":"The navy and beige pairing is classic; a slim maroon silk scarf would introduce a beautiful unexpected third tone.",
@@ -31,7 +30,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"the commute elevated",
 "vibe_line":"smart casual that actually looks smart",
 "whats_working":"The matching brown leather accessories pull the entire look together with undeniable intention.",
-"nudge":null,
 "image_prompt":null,
 "tips":{
   "color_harmony":"The maroon and navy stripe is sharp; swapping the white shirt base for a faint cream would warm the palette.",
@@ -50,7 +48,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"print heavy, structure light",
 "vibe_line":"bohemian spirit meets everyday utility",
 "whats_working":"The oxidized silver jewelry harmonizes perfectly with the earthy block-print tones of the dress.",
-"nudge":"Swap the structured canvas tote for a soft leather or woven sling to match the dress's relaxed silhouette.",
 "image_prompt":"woman wearing dark navy block-print maxi dress, sage-green flat sandals, soft brown woven leather sling bag, oxidized silver jewelry, bohemian, fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus",
 "tips":{
   "color_harmony":"The deep red border and mustard print are lovely, but the sage-green sandals slightly disconnect from the earthy palette.",
@@ -69,7 +66,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"minimalism in motion",
 "vibe_line":"clean lines and crisp execution",
 "whats_working":"The cropped pinstripe trousers perfectly frame the pristine white sneakers for a modern, intentional silhouette.",
-"nudge":null,
 "image_prompt":null,
 "tips":{
   "color_harmony":"The navy and white contrast is crisp; a dark green suede belt would add a very subtle, sophisticated third color.",
@@ -88,7 +84,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"burgundy done right",
 "vibe_line":"relaxed confidence in a classic palette",
 "whats_working":"The rich burgundy creates a warm, sophisticated contrast against the light tan trousers.",
-"nudge":null,
 "image_prompt":null,
 "tips":{
   "color_harmony":"The rich burgundy against light tan is beautiful; a slightly warmer dark brown leather belt would enhance the contrast.",
@@ -107,7 +102,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"graphic ease",
 "vibe_line":"art school chic meets off-duty elegance",
 "whats_working":"The nude pointed-toe pumps elegantly anchor the relaxed, voluminous silhouette of the untucked shirt and wide-leg denim.",
-"nudge":null,
 "image_prompt":null,
 "tips":{
   "color_harmony":"The blue graphic on white is striking; swapping the brown suede tote for a navy one would tighten the palette.",
@@ -126,7 +120,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"eveningwear with edge",
 "vibe_line":"a masterclass in subtle, textured glamour",
 "whats_working":"The sequined chevron pattern provides striking visual interest while respecting black-tie tradition.",
-"nudge":null,
 "image_prompt":null,
 "tips":{
   "color_harmony":"The all-black execution is flawless; a subtle silver or gunmetal thread in the waistcoat would add dimensional contrast.",
@@ -145,7 +138,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"cobalt power play",
 "vibe_line":"unapologetic colour meets sharp tailoring",
 "whats_working":"The white square-neck top perfectly mirrors the white slide heels, framing the bold cobalt suit.",
-"nudge":null,
 "image_prompt":null,
 "tips":{
   "color_harmony":"The cobalt and white contrast is powerful; swapping the gold hoops for silver would keep the palette completely cool-toned.",
@@ -164,7 +156,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"ethereal floral romance",
 "vibe_line":"a masterclass in delicate, cohesive bridal wear",
 "whats_working":"The consistent floral embroidery across the blouse, skirt, and clutch creates a stunning, unified narrative.",
-"nudge":null,
 "image_prompt":null,
 "tips":{
   "color_harmony":"The off-white base with pink/green florals is sublime; a very pale mint dupatta would subtly enhance the green embroidery.",
@@ -183,7 +174,6 @@ These show correct scoring calibration and feedback voice. Match this tone and r
 "label":"regal textural depth",
 "vibe_line":"traditional grandeur executed with perfect restraint",
 "whats_working":"The deep navy velvet stole adds a luxurious textural contrast against the copper-threaded jacquard sherwani.",
-"nudge":null,
 "image_prompt":null,
 "tips":{
   "color_harmony":"The navy stole against copper jacquard is brilliant; a deep emerald pocket square would add a royal third tone.",
@@ -252,7 +242,6 @@ STEP 3 — SCORING (calibrated honestly)
 - Most real-world outfits land between 4.5 and 7. Be honest.
 - Missing accessories, clashing colours, poor fit — deduct. Do not be shy.
 - Do NOT round up to be kind. A 5.5 should feel like a 5.5.
-- Nudge ONLY if total < 80. One nudge max. Score ≥ 80: NO nudge.
 
 ─────────────────────────────
 STEP 4 — WRITING FEEDBACK (the most important part)
@@ -263,7 +252,6 @@ FIELDS:
 - label: MAX 6 words. An arresting, Instagram-worthy capsule of this exact outfit — specific to the garment, colour, and vibe you see. The energy to aim for (do NOT copy): "the kurta knows what it's doing", "one belt away from iconic", "navy doing the heavy lifting", "colour story: still finding the plot", "embroidery carrying the whole look". No hashtags. No full stops. Must feel like it could appear on a Vogue India reel.
 - vibe_line: MAX 12 words. One crisp, editorial sentence. The kind a Creative Director would say while reviewing a lookbook. Specific to this outfit. No full stops.
 - whats_working: MAX 20 words. Name the single strongest element and say precisely WHY it works — fabric, colour choice, proportion, styling detail. Sound like you are writing a design review. Not "the colours look nice." More like: "The deep navy jacquard against cream dhoti pants creates exactly the right formal tension."
-- nudge: MAX 20 words. One specific, immediately actionable correction. Name the exact piece or detail. Sound like a mentor mid-critique — clear, direct, not unkind. Not "add accessories." More like: "A slim oxidised silver cuff on the left wrist would anchor the whole look."
 
 TIP QUALITY — this is critical:
 Each tip must read like a designer note, not a style blog caption. Be precise:
@@ -305,7 +293,7 @@ ${CALIBRATION_EXAMPLES}
 ─────────────────────────────
 IMAGE PROMPT (for the "new look" visualisation)
 ─────────────────────────────
-- Only populate image_prompt when nudge is not null (score < 80)
+- Only populate image_prompt when total score < 80
 - Write a precise Flux/SDXL generation prompt for the improved outfit
 - Describe exactly ONE person, ONE outfit, standing still, facing camera
 - Be specific: exact garment names, exact colours, fabric descriptors, accessories
@@ -335,8 +323,7 @@ Respond ONLY with valid JSON, no markdown:
   "label": "",
   "vibe_line": "",
   "whats_working": "",
-  "nudge": null,
-  "image_prompt": null,
+    "image_prompt": null,
   "tips": {
     "color_harmony": "Specific palette critique or colour suggestion — name the exact tones. Max 25 words.",
     "outfit_cohesion": "Name the exact piece or element disrupting cohesion and suggest the precise fix. Max 25 words.",
