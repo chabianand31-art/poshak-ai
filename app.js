@@ -308,7 +308,6 @@ async function callGroq(imageBase64, mediaType) {
     body: JSON.stringify({
       model: 'qwen/qwen3.6-27b',
       max_tokens: 1000,
-      response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: [
