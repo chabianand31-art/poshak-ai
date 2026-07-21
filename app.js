@@ -308,6 +308,7 @@ async function callGroq(imageBase64, mediaType) {
     body: JSON.stringify({
       model: 'qwen/qwen3.6-27b',
       max_tokens: 2000,
+      response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: [
@@ -339,7 +340,13 @@ async function startAnalysis() {
 
     const rawText = data.choices?.[0]?.message?.content || '';
     if (!rawText) throw new Error('Empty response. Try again.');
-    const clean = rawText.replace(/```json|```/g, '').trim();
+    let clean = rawText.replace(/```json|```/g, '').trim();
+    // Extract JSON in case of <think> blocks or other conversational text
+    const firstBrace = clean.indexOf('{');
+    const lastBrace = clean.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
+      clean = clean.substring(firstBrace, lastBrace + 1);
+    }
     const result = JSON.parse(clean);
 
     if (!result.scoreable) {
