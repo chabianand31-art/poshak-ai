@@ -307,8 +307,8 @@ async function callGroq(imageBase64, mediaType) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      max_tokens: 1000,
+      model: 'meta-llama/llama-4-maverick-17b-128e-instruct',
+      max_tokens: 1500,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: [
@@ -334,7 +334,7 @@ async function startAnalysis() {
 
     if (!response.ok) {
       const msg = data.error?.message || `API error ${response.status}`;
-      if (response.status === 401) { localStorage.removeItem('dc_api_key'); showKeyModal(); return; }
+      if (response.status === 401) { throw new Error('API key error. Please check your Groq API key.'); }
       throw new Error(msg);
     }
 
