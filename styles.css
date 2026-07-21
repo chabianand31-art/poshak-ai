@@ -53,6 +53,21 @@
     z-index: 100;
   }
 
+  /* On home screen — header floats transparently over hero */
+  body:has(#screen-home.active) header {
+    position: absolute;
+    width: 100%;
+    background: transparent;
+    border-bottom: none;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+  body:has(#screen-home.active) main {
+    padding: 0;
+    align-items: stretch;
+    margin-top: -68px;
+  }
+
   .logo {
     font-family: 'Playfair Display', serif;
     font-size: 22px;
@@ -73,7 +88,6 @@
 
   /* ── MAIN ── */
   main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0.75rem 1.5rem; }
-  main:has(#screen-home.active) { padding: 0; align-items: stretch; }
 
   /* ── SCREENS ── */
   .screen { display: none; width: 100%; max-width: 540px; animation: fadeUp 0.4s ease; }
@@ -87,14 +101,14 @@
   .hero-layout {
     display: grid;
     grid-template-columns: 54% 46%;
-    min-height: calc(100vh - 68px);
+    min-height: 100vh;
     overflow: hidden;
   }
   .hero-left {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 4rem 3.5rem 4rem 5vw;
+    padding: 6rem 3.5rem 3rem 5vw;
   }
   .hero-right {
     position: relative;
@@ -228,60 +242,50 @@
   }
   .sample-link:hover { color: var(--coral); }
 
-  /* ── RIGHT COLUMN: OVERLAPPING PHOTO COLLAGE ── */
+  /* ── RIGHT COLUMN: EDITORIAL PHOTO LAYOUT ── */
   .himg {
     position: absolute;
     object-fit: cover;
-    border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(26,23,20,0.18), 0 2px 8px rgba(26,23,20,0.1);
-    transition: transform 0.3s ease;
   }
-  /* Top-right: tall portrait — model */
-  .himg-1 {
-    width: 46%;
-    height: 60%;
-    top: 3%;
-    right: 2%;
-    transform: rotate(3.5deg);
-    z-index: 3;
-    border-radius: 22px;
-  }
-  /* Top-left: fashion portrait, slightly behind */
-  .himg-2 {
-    width: 42%;
-    height: 54%;
-    top: 6%;
-    left: 4%;
-    transform: rotate(-3deg);
-    z-index: 2;
-    border-radius: 18px;
-  }
-  /* Bottom-center: shoes, peeking below */
-  .himg-3 {
-    width: 40%;
-    height: 38%;
-    bottom: 4%;
-    left: 50%;
-    transform: translateX(-50%) rotate(2deg);
-    z-index: 4;
-    border-radius: 16px;
-  }
-  .himg:hover { transform: rotate(0deg) scale(1.04) !important; z-index: 20; }
 
+  /* Top-right photo — bleeds to top + right edges, rounded bottom-left only */
+  .himg-top {
+    top: 0;
+    right: 0;
+    width: 68%;
+    height: 55%;
+    border-radius: 0 0 0 36px;
+    z-index: 2;
+    box-shadow: -6px 6px 28px rgba(26,23,20,0.14);
+  }
+
+  /* Bottom-right photo — bleeds to bottom + right edges, rounded top-left only */
+  .himg-btm {
+    bottom: 0;
+    right: 0;
+    width: 58%;
+    height: 42%;
+    border-radius: 28px 0 0 0;
+    z-index: 2;
+    box-shadow: -6px -6px 28px rgba(26,23,20,0.14);
+  }
+
+  /* Phone — centered, floating above both photos */
   .hero-phone-wrap {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 52%;
+    left: 34%;
     transform: translate(-50%, -50%);
     z-index: 15;
+    filter: drop-shadow(0 28px 56px rgba(26,23,20,0.4));
   }
 
   /* ── PHONE MOCKUP ── */
   .phone-frame {
-    width: 195px;
+    width: 235px;
     background: #18130F;
-    border-radius: 34px;
-    padding: 13px 9px 16px;
+    border-radius: 38px;
+    padding: 15px 11px 18px;
     box-shadow:
       0 0 0 1.5px rgba(255,255,255,0.07),
       0 32px 80px rgba(26,23,20,0.45),
@@ -374,17 +378,18 @@
   /* ── HANDWRITTEN NOTE ── */
   .handwritten-note {
     position: absolute;
-    bottom: 4%;
-    right: 4%;
-    font-family: Georgia, serif;
+    bottom: 6%;
+    right: 3%;
+    font-family: Georgia, 'Times New Roman', serif;
     font-style: italic;
-    font-size: 11.5px;
-    color: var(--ink-soft);
+    font-size: 12px;
+    color: #5A5248;
     text-align: right;
-    line-height: 1.6;
-    opacity: 0.5;
-    transform: rotate(1.5deg);
-    z-index: 25;
+    line-height: 1.65;
+    opacity: 0.75;
+    transform: rotate(1deg);
+    z-index: 20;
+    pointer-events: none;
   }
 
   /* ── MOBILE RESPONSIVE ── */
