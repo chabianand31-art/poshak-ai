@@ -307,13 +307,13 @@ async function callGroq(imageBase64, mediaType) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'qwen/qwen3.6-27b',
-      max_tokens: 1000,
+      max_tokens: 6000,
       include_reasoning: false,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: [
           { type: 'image_url', image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
-          { type: 'text', text: 'Score this outfit. Only return the json. No thinking.' }
+          { type: 'text', text: 'Score this outfit. Only return the json.' }
         ]}
       ]
     })
