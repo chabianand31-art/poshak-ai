@@ -306,7 +306,7 @@ async function callGroq(imageBase64, mediaType) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'openai/gpt-oss-120b',
+      model: 'qwen/qwen3.6-27b',
       max_tokens: 2000,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
