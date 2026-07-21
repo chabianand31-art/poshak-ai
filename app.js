@@ -312,7 +312,7 @@ async function callGroq(imageBase64, mediaType) {
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: [
           { type: 'image_url', image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
-          { type: 'text', text: 'Score this outfit.' }
+          { type: 'text', text: 'Score this outfit. Only return the json. No thinking.' }
         ]}
       ]
     })
@@ -339,13 +339,7 @@ async function startAnalysis() {
 
     const rawText = data.choices?.[0]?.message?.content || '';
     if (!rawText) throw new Error('Empty response. Try again.');
-    let clean = rawText.replace(/```json|```/g, '').trim();
-    // Extract JSON in case of <think> blocks or other conversational text
-    const firstBrace = clean.indexOf('{');
-    const lastBrace = clean.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
-      clean = clean.substring(firstBrace, lastBrace + 1);
-    }
+    const clean = rawText.replace(/```json|```/g, '').trim();
     const result = JSON.parse(clean);
 
     if (!result.scoreable) {
