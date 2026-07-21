@@ -339,7 +339,13 @@ async function startAnalysis() {
 
     const rawText = data.choices?.[0]?.message?.content || '';
     if (!rawText) throw new Error('Empty response. Try again.');
-    const clean = rawText.replace(/```json|```/g, '').trim();
+    let clean = rawText.replace(/```json|```/g, '').trim();
+    // Extract JSON in case of <think> blocks or other conversational text
+    const firstBrace = clean.indexOf('{');
+    const lastBrace = clean.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
+      clean = clean.substring(firstBrace, lastBrace + 1);
+    }
     const result = JSON.parse(clean);
 
     if (!result.scoreable) {
