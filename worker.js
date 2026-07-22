@@ -1,7 +1,8 @@
+// Updated: qwen/qwen3.6-27b — ALLOWED_ORIGINS includes null + localhost
 export default {
   async fetch(request, env) {
 
-    const ALLOWED_ORIGINS = ['https://poshakbyai.com'];
+    const ALLOWED_ORIGINS = ['https://poshakbyai.com', 'http://localhost:8080', 'null'];
     const origin = request.headers.get('Origin');
 
     const corsHeaders = {
