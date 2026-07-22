@@ -307,7 +307,7 @@ async function callGroq(imageBase64, mediaType) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'meta-llama/llama-4-maverick-17b-128e-instruct',
+      model: 'qwen/qwen3.6-27b',
       max_tokens: 1500,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
