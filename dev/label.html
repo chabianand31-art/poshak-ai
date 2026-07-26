@@ -39,8 +39,8 @@
 <div id="panel">
   <div id="warn"></div>
   <h1 id="fname"></h1>
-  <div class="muted"><span id="pos"></span> &middot; <span id="done"></span> images complete
-    &middot; <span id="pts"></span> points</div>
+  <div class="muted"><span id="pos"></span> &middot; <span id="done"></span> seen
+    &middot; <span id="pts"></span></div>
 
   <div class="row">
     <label for="who">Labeller <span class="muted">- keeps each person's scores separate</span></label>
@@ -62,7 +62,7 @@
     <button id="next" class="primary">Next &rarr;</button>
   </div>
   <div class="row btns">
-    <button id="clear">Clear this image</button>
+    <button id="clear">Reset to 5.0</button>
     <button id="export">Export JSON</button>
   </div>
   <div class="muted" id="exported"></div>
@@ -81,6 +81,7 @@ const IMAGES = [{"id": "a7ff35fd133e4c5e", "path": "Screenshot 2026-07-12 052217
 // SEEDS: {labeller: labels} loaded from labels*.json on disk, so a session can be
 // resumed from an exported file even on a different machine.
 const SEEDS = {}, PREFIX = "poshak_labels_v3::", WHO_KEY = "poshak_labeller";
+const DEFAULT_SCORE = 5;
 
 const slug = s => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -123,14 +124,32 @@ function rec() {
   if (!r) r = labels[img.id] = {};
   r.path = img.path;
   if (!r.scores) r.scores = {};
+  // Labels imported from disk predate `touched`; treat everything already scored
+  // there as deliberate rather than as an untouched default.
+  if (!r.touched) r.touched = Object.keys(r.scores);
   return r;
 }
 const nScores = r => r && r.scores ? Object.keys(r.scores).length : 0;
+const nTouched = r => r && r.touched ? r.touched.length : 0;
+
+// Landing on an image seeds every occasion at DEFAULT_SCORE, so the readout agrees
+// with the centred slider and only differences need adjusting. `touched` records
+// which ones were actually moved, so images merely paged past stay identifiable.
+function ensureDefaults() {
+  const r = rec();
+  let added = false;
+  OCCASIONS.forEach(o => {
+    if (typeof r.scores[o] !== "number") { r.scores[o] = DEFAULT_SCORE; added = true; }
+  });
+  if (added) persist();
+}
 
 function persist() { lsSet(storeKey(), JSON.stringify(labels)); }
 
 function setScore(n, v) {
-  rec().scores[OCCASIONS[n]] = v;
+  const r = rec(), o = OCCASIONS[n];
+  r.scores[o] = v;
+  if (!r.touched.includes(o)) r.touched.push(o);
   persist();
   render();
 }
@@ -143,23 +162,27 @@ $("notes").onchange = () => { rec().notes = $("notes").value.trim(); persist(); 
 $("who").onchange = () => { loadFor($("who").value.trim()); render(); };
 
 function render() {
-  const img = IMAGES[i], r = labels[img.id] || {}, scores = r.scores || {};
+  ensureDefaults();
+  const img = IMAGES[i], r = labels[img.id] || {}, scores = r.scores || {},
+        touched = r.touched || [];
   // src is an embedded data URI in the standalone build; otherwise a relative path.
   $("img").src = img.src || ("sample_images/" + img.path.split("/").map(encodeURIComponent).join("/"));
   $("fname").textContent = img.path;
   $("pos").textContent = `${i + 1} / ${IMAGES.length}`;
 
-  const complete = Object.values(labels).filter(x => nScores(x) === OCCASIONS.length).length;
-  const pts = Object.values(labels).reduce((a, x) => a + nScores(x), 0);
-  $("done").textContent = `${complete} / ${IMAGES.length}`;
-  $("pts").textContent = `${pts} / ${IMAGES.length * OCCASIONS.length}`;
+  const visited = Object.values(labels).filter(x => nScores(x) > 0);
+  const allDefault = visited.filter(x => nTouched(x) === 0).length;
+  $("done").textContent = `${visited.length} / ${IMAGES.length}`;
+  $("pts").textContent = allDefault
+    ? `${allDefault} untouched (all 5.0)`
+    : "none untouched";
 
   OCCASIONS.forEach((o, n) => {
-    const el = $(`occ-${n}`), has = typeof scores[o] === "number";
+    const el = $(`occ-${n}`);
     el.classList.toggle("focus", n === focus);
-    el.classList.toggle("unset", !has);
-    el.querySelector("input").value = has ? scores[o] : 5;
-    $(`val-${n}`).textContent = has ? scores[o].toFixed(1) : "-";
+    el.classList.toggle("unset", !touched.includes(o));
+    el.querySelector("input").value = scores[o];
+    $(`val-${n}`).textContent = scores[o].toFixed(1);
   });
   $("notes").value = r.notes || "";
   $("who").value = who;
@@ -176,11 +199,12 @@ $("clear").onclick = () => { delete labels[IMAGES[i].id]; persist(); render(); }
 // rows are perfectly usable downstream, so this never nags about them.
 $("export").onclick = () => {
   const clean = {};
-  let pts = 0;
+  let pts = 0, untouched = 0;
   for (const [k, v] of Object.entries(labels)) {
     if (nScores(v) === 0) continue;
     clean[k] = v;
     pts += nScores(v);
+    if (nTouched(v) === 0) untouched++;
   }
   if (!pts) { alert("Nothing scored yet."); return; }
   const fname = who ? `labels.${slug(who)}.json` : "labels.json";
@@ -188,7 +212,8 @@ $("export").onclick = () => {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = fname; a.click();
   $("exported").textContent =
-    `exported ${Object.keys(clean).length} image(s), ${pts} point(s) to ${fname}`;
+    `exported ${Object.keys(clean).length} image(s), ${pts} point(s) to ${fname}`
+    + (untouched ? ` - ${untouched} left at the untouched 5.0 default` : "");
 };
 
 document.onkeydown = e => {
