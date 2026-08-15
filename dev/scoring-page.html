@@ -112,6 +112,17 @@
            max-width:150px}
   .tiersel:hover{border-color:var(--gold)}
   .emptytier{font-size:13px;color:var(--muted);border:none;background:none;padding:0}
+  /* An occasion the reviewer explicitly endorsed. Quieter than a moved one on purpose: a
+     correction is the rarer, more informative act and should read louder. */
+  .tierocc span.okocc{background:#F2F6EC;border-color:#B8C79A}
+  .okmark{font-style:normal;color:var(--ok);margin-right:5px;font-size:11px}
+  .okrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;
+         padding-top:12px;border-top:1px dashed var(--line)}
+  .okbtn{font:inherit;font-size:12.5px;padding:6px 12px;border-radius:8px;cursor:pointer;
+         border:1px solid var(--line);background:#fff;color:var(--ink-soft)}
+  .okbtn:hover{border-color:var(--ok);color:var(--ink)}
+  .okbtn.on{background:#EDF3E3;border-color:var(--ok);color:#4A5A32;font-weight:600}
+  .okstate{font-size:12.5px;color:var(--muted)}
 
   /* Occasion tiers: names only. No band words, no bars — see params.occasion_tier. */
   .tiers{display:flex;flex-direction:column;gap:2px}
@@ -371,8 +382,10 @@ function render(toTop = true){
                            '<option value="' + k + '"' + (k === tierOf(d.file, o) ? ' selected' : '') +
                            '>' + esc(o.labels[k]) + (k === o.tier ? ' \u00b7 engine' : '') +
                            '</option>').join("") + '</select>';
+                       const okd = !mine && (tierOk[d.file] || {})[o.engine_occasion] === o.tier;
                        return '<span class="' + (o.basis !== "fit" ? "covocc " : "") +
-                         (mine ? "movedocc" : "") + '"' + cov + '>' + esc(o.occasion) +
+                         (mine ? "movedocc" : okd ? "okocc" : "") + '"' + cov + '>' +
+                         (okd ? '<i class="okmark">\u2713</i>' : '') + esc(o.occasion) +
                          (o.label !== d.tier_labels[o.tier] && !mine
                            ? '<i class="ownlabel">' + esc(o.label) + '</i>' : '') +
                          (mine ? '<i class="ownlabel">you moved this from ' +
@@ -439,6 +452,21 @@ function render(toTop = true){
         '<b>Disagree? Move any occasion to the level you would give it</b> \u2014 your ' +
         'placement is saved and comes down with the notes.</p>' +
       lowHTML +
+      // Silence is not agreement, so agreement has to be sayable. Counts are shown because a
+      // partial pass must look partial: "4 of 8" is information, a green tick on an unread panel
+      // is not.
+      '<div class="okrow">' +
+        '<button id="okall" class="okbtn' + (confirmedCount(d.file) ? ' on' : '') + '">' +
+          (confirmedCount(d.file) ? '\u2713 Confirmed' : 'These placements are right') +
+        '</button>' +
+        '<span class="okstate">' +
+          (confirmedCount(d.file) || movedCount(d.file)
+            ? '<b>' + confirmedCount(d.file) + '</b> confirmed, <b>' + movedCount(d.file) +
+              '</b> moved, <b>' + (8 - confirmedCount(d.file) - movedCount(d.file)) +
+              '</b> not reviewed'
+            : 'Nothing recorded for this outfit yet \u2014 leaving it blank is not agreement') +
+        '</span>' +
+      '</div>' +
     '</div>';
 
   document.getElementById("pos").textContent = (idx+1) + " of " + DATA.length;
@@ -605,6 +633,46 @@ const TIERS_KEY = "poshak-tiers-v1";
 let tierFix = {};
 try { tierFix = JSON.parse(localStorage.getItem(TIERS_KEY) || "{}"); } catch (e) { tierFix = {}; }
 
+/* ---------- positive confirmation ----------
+   The corrections above record only DISAGREEMENT, so an unmoved occasion means "agrees, skipped,
+   or never scrolled here" — all three at once. That is the untouched-default problem exactly, and
+   it is why the last round's 17 placement corrections came with no denominator: 17 wrong out of
+   how many looked at?
+
+   Shape: {file: {engineOccasion: tierKeyAsShown}}, recording WHICH VERDICT was endorsed rather
+   than a bare true. If the engine later moves that occasion, a stored "works" tells you they
+   agreed with `works` specifically — a boolean would silently transfer their approval to whatever
+   the engine says next, which is the same class of bug as scoring a defaulted field.
+
+   Panel-level, not per occasion, and that is a considered trade. 8 boxes x 48 images = 384 clicks
+   is a form nobody finishes, and a half-finished one restores the very ambiguity this removes. The
+   opposite risk is real and documented — a one-click "all fine" is easy to click carelessly, which
+   is how five label files ended up positive-only — so the button is deliberately worded as a claim
+   about all eight, the confirmed tiers are recorded so the claim is auditable afterwards, and
+   moving an occasion withdraws its confirmation rather than sitting alongside it. */
+const CONFIRM_KEY = "poshak-confirm-v1";
+let tierOk = {};
+try { tierOk = JSON.parse(localStorage.getItem(CONFIRM_KEY) || "{}"); } catch (e) { tierOk = {}; }
+
+function confirmedCount(file){ return Object.keys(tierOk[file] || {}).length; }
+function movedCount(file){ return Object.keys(tierFix[file] || {}).length; }
+function okCount(){ return Object.keys(tierOk).length; }
+
+// Endorse every occasion the reviewer has NOT moved, at the tier currently shown. Toggles off.
+function confirmAll(file){
+  const d = DATA[idx];
+  if (confirmedCount(file)) { delete tierOk[file]; }
+  else {
+    const map = {};
+    d.occ_tiers.forEach(o => {
+      if (!(tierFix[file] || {})[o.engine_occasion]) map[o.engine_occasion] = o.tier;
+    });
+    if (Object.keys(map).length) tierOk[file] = map;
+  }
+  persist();
+  render(false);
+}
+
 // The tier an occasion is DRAWN in: the reviewer's if they moved it, else the engine's.
 function tierOf(file, o){
   const f = tierFix[file];
@@ -616,6 +684,10 @@ function setTier(file, engineOcc, tier, engineTier){
                          if (!Object.keys(tierFix[file]).length) delete tierFix[file]; }
   } else {
     (tierFix[file] ||= {})[engineOcc] = tier;
+    // A move withdraws any standing endorsement of THIS occasion. Holding both would be a record
+    // of someone agreeing and disagreeing at once, and the later action is the real one.
+    if (tierOk[file]) { delete tierOk[file][engineOcc];
+                        if (!Object.keys(tierOk[file]).length) delete tierOk[file]; }
   }
   persist();
   render(false);
@@ -632,6 +704,7 @@ function persist(){
   try {
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
     localStorage.setItem(TIERS_KEY, JSON.stringify(tierFix));
+    localStorage.setItem(CONFIRM_KEY, JSON.stringify(tierOk));
     stateEl.textContent = "Saved";
     stateEl.className = "notestate saved";
   } catch (e) {
@@ -645,16 +718,18 @@ function persist(){
 }
 
 function refreshNotesUI(){
-  const n = noteCount(), m = fixCount();
-  // A moved occasion is reviewer input with no note attached, so it has to count here too —
-  // otherwise a reviewer who only moves tiers sees "0 of 48" and a disabled Download, and
-  // their whole pass is lost on close. Same failure mode as an untouched default, inverted.
+  const n = noteCount(), m = fixCount(), k = okCount();
+  // Moved occasions and confirmations are reviewer input with no note attached, so both count
+  // here — otherwise a reviewer who only worked the occasion panel sees "0 of 48" and a disabled
+  // Download, and their whole pass is lost on close. Same failure as an untouched default,
+  // inverted.
   document.getElementById("notecount").innerHTML =
     "<b>" + n + "</b> of " + DATA.length + " images have notes" +
-    (m ? " \u00b7 <b>" + m + "</b> with occasions you moved" : "");
-  document.getElementById("dl").disabled = n === 0 && m === 0;
+    (m ? " \u00b7 <b>" + m + "</b> with occasions you moved" : "") +
+    (k ? " \u00b7 <b>" + k + "</b> confirmed" : "");
+  document.getElementById("dl").disabled = n === 0 && m === 0 && k === 0;
   document.getElementById("notesbox").classList.toggle(
-    "finished", idx === DATA.length - 1 && (n > 0 || m > 0));
+    "finished", idx === DATA.length - 1 && (n > 0 || m > 0 || k > 0));
 }
 
 function loadNote(){
@@ -673,6 +748,10 @@ document.getElementById("view").addEventListener("change", e => {
   const d = DATA[idx];
   const engine = d.occ_tiers.find(o => o.engine_occasion === sel.dataset.occ);
   setTier(d.file, sel.dataset.occ, sel.value, engine.tier);
+});
+
+document.getElementById("view").addEventListener("click", e => {
+  if (e.target.closest("#okall")) confirmAll(DATA[idx].file);
 });
 
 noteEl.addEventListener("input", () => {
@@ -706,14 +785,20 @@ document.getElementById("dl").onclick = () => {
   };
   out.tier_corrections_total = DATA.reduce(
     (n, d) => n + Object.keys(tierFix[d.file] || {}).length, 0);
+  // The denominator. Without it a correction count is unreadable: 17 corrections could be 17 of
+  // 20 looked at or 17 of 384. Counted in CELLS, not images, for the same reason.
+  out.tier_confirmations_total = DATA.reduce(
+    (n, d) => n + Object.keys(tierOk[d.file] || {}).length, 0);
+  out.occasion_cells_total = DATA.length * 8;
   DATA.forEach(d => {
     const t = (notes[d.file] || "").trim();
     // A moved occasion with no note is still a judgement, and the commonest one: last round
     // came back with corrections buried in prose ("party- Might work") that no join could
     // read. Exporting only noted images would now silently drop the structured version of
-    // exactly that feedback.
+    // exactly that feedback. Confirmations count the same way.
     const fixes = tierFix[d.file] || {};
-    if (!t && !Object.keys(fixes).length) return;
+    const oks = tierOk[d.file] || {};
+    if (!t && !Object.keys(fixes).length && !Object.keys(oks).length) return;
     // Records what the reviewer SAW, not just what the engine held: the panel shows tiers, so
     // the export leads with tiers. Bands ride along because they are what the engine actually
     // decided and a note read six weeks later needs both.
@@ -751,6 +836,24 @@ document.getElementById("dl").onclick = () => {
       });
       out.notes[d.file].tier_corrections = corr;
     }
+    // Endorsements, keyed the same way and carrying the tier that was endorsed — so a reader
+    // months later knows WHAT was agreed with, not merely that something was. An occasion in
+    // neither map was not reviewed, and that is a third state, not a quiet yes.
+    if (Object.keys(oks).length) {
+      const conf = {};
+      d.occ_tiers.forEach(o => {
+        if (!oks[o.engine_occasion]) return;
+        conf[o.engine_occasion] = {
+          occasion_display: o.occasion,
+          confirmed_tier: oks[o.engine_occasion],
+          confirmed_label: o.labels[oks[o.engine_occasion]],
+          // If the engine has moved since they confirmed, the export says so rather than
+          // quietly transferring their approval to a verdict they never saw.
+          still_matches_engine: oks[o.engine_occasion] === o.tier,
+        };
+      });
+      out.notes[d.file].tier_confirmations = conf;
+    }
   });
   const blob = new Blob([JSON.stringify(out, null, 1)], {type: "application/json"});
   const a = document.createElement("a");
@@ -763,7 +866,7 @@ document.getElementById("dl").onclick = () => {
 // A reviewer who closes the tab with undownloaded notes loses nothing (localStorage survives),
 // but they may not realise the file was never produced. Nudge once.
 window.addEventListener("beforeunload", e => {
-  if (noteCount() > 0 || fixCount() > 0) { e.preventDefault(); e.returnValue = ""; }
+  if (noteCount() > 0 || fixCount() > 0 || okCount() > 0) { e.preventDefault(); e.returnValue = ""; }
 });
 
 document.getElementById("prev").onclick = () => { if (idx > 0){ idx--; render(); } };
