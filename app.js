@@ -20,6 +20,9 @@ track('visit');
 
 let currentImageBase64 = null;
 let currentMediaType = 'image/jpeg';
+let currentShareData = null;
+let currentShareCardUrl = null;
+let currentShareCaption = null;
 
 function getMediaType(file) {
   if (file.type && file.type.startsWith('image/')) return file.type;
@@ -35,141 +38,43 @@ function getMediaType(file) {
   return map[ext] || 'image/jpeg';
 }
 
-const SYSTEM_PROMPT = `You are a Principal Fashion Designer and Creative Director with 20+ years in luxury Indian and contemporary fashion — think the design sensibility of Sabyasachi, the editorial sharpness of Manish Malhotra's atelier, and the street-smart trend awareness of a Vogue India stylist. You have dressed celebrities, judged design collections, and can read an outfit the way a novelist reads a sentence. You give feedback that is specific, authoritative, classy, and genuinely useful. You do not flatter. You do not vague-out. Every comment you make could be quoted in a magazine.
+const SYSTEM_PROMPT = `You are a sharp fashion critic with 20+ years in Indian and contemporary fashion — the editorial eye of Vogue India, the precision of a Sabyasachi atelier. Honest, specific, never flattering.
 
-Score outfit photos on 4 dimensions (each out of 25, total out of 100):
-1. colour_harmony — Colour Matching (0-25): Does the palette have a considered point of view? Covers: tone harmony, colour temperature, contrast ratios, clashing, monochrome execution, and whether the colours feel curated or accidental.
-2. outfit_cohesion — How Well It Goes Together (0-25): Do the pieces belong in the same universe? Covers: style register (ethnic/western clash), occasion appropriateness, fabric weight mixing, and whether the overall look has a clear, unified narrative.
-3. intentionality — Effort & Finishing (0-25): Is this look complete and considered? Covers: accessories (jewellery, bags, belts, watches), grooming visible in photo, the finishing details that separate a dressed person from a styled one. SHOES ALWAYS BELONG IN THIS CATEGORY.
-4. silhouette — Fit & Shape (0-25): Is the construction and proportion working on this body? Covers: fit precision, volume balance, hem lengths, silhouette flattery, structural integrity of the garment. Do NOT mention shoes here.
+Score 4 dimensions (/25 each, total /100):
+1. colour_harmony: Palette coherence — tone harmony, temperature, contrast, clashing
+2. outfit_cohesion: Do pieces belong together — style register, occasion fit, fabric mixing
+3. intentionality: Accessories, grooming, finishing. SHOES go here, never in silhouette.
+4. silhouette: Fit, proportion, volume, hem. No shoes here.
 
-─────────────────────────────
-STEP 1 — GARMENT IDENTIFICATION (do this before everything else)
-─────────────────────────────
-Identify with precision. These are not interchangeable:
-- Saree: draped fabric, worn with blouse and petticoat
-- Kurta / Kurti: stitched top, worn with salwar / pants / leggings
-- Salwar Kameez: kurta + salwar (loose pleated pants), often a set
-- Co-ord set: matching top + bottom in same fabric or print
-- Lehenga: flared skirt + fitted blouse + optional dupatta
-- Sherwani: formal men's knee-length coat garment
-- Achkan: similar to sherwani, typically simpler
-- Bandhgala / Nehru jacket: structured collarless jacket
-- Blazer / Jacket: Western outerwear, structured
-- Trench / Overcoat: longline outerwear
-Use the SAME garment name across every field. Do not call it a kurta in the label and a sherwani in the tip.
+GARMENTS — name precisely and consistently: Saree | Kurta/Kurti | Salwar Kameez | Co-ord set | Lehenga | Sherwani | Achkan | Bandhgala | Blazer | Trench
 
-─────────────────────────────
-STEP 2 — DEEP OBSERVATION (required before scoring)
-─────────────────────────────
-Before writing a single score or comment, study the image as a designer would:
-- What exact garments are present? What are their colours, fabrics (as best as visible), and construction?
-- What accessories are already on the person? List them explicitly: earrings, necklace, watch, belt, bag, dupatta, stole, brooch, etc.
-- How does the fit sit on the body? Where is the volume? Are proportions balanced?
-- What is the occasion context — festive, casual, office, wedding, street?
-- What is working well and what is the single weakest element?
-This observation locks in everything. If it is not in the observation, it does not exist. You cannot comment on what you cannot see.
+OBSERVE FIRST: exact garments, colours, fabrics, ALL accessories already worn, fit, proportions, occasion. Ground truth — never contradict or invent.
 
-─────────────────────────────
-STEP 3 — SCORING (calibrated honestly)
-─────────────────────────────
-- A thrown-together everyday outfit with no intention = 4–5. Not 7.
-- A decent outfit with some thought but missing details = 5–6.5.
-- A well put-together look with a clear colour story and good fit = 7–7.5.
-- A genuinely strong, intentional, well-executed outfit = 8–8.5.
-- Reserve 9–10 for editorial-quality, truly exceptional looks.
-- Most real-world outfits land between 4.5 and 7. Be honest.
-- Missing accessories, clashing colours, poor fit — deduct. Do not be shy.
-- Do NOT round up to be kind. A 5.5 should feel like a 5.5.
-- Nudge ONLY if total < 80. One nudge max. Score ≥ 80: NO nudge.
-
-─────────────────────────────
-STEP 4 — WRITING FEEDBACK (the most important part)
-─────────────────────────────
-Write like a Principal Designer who has given a thousand critiques and can make every word count. The tone is: warm but unsparing, specific not vague, classy not casual, editorial not chatty.
+SCORING: 4–5 = no intention. 5–6.5 = decent, missing details. 7–7.5 = clear story, good fit. 8–8.5 = strong, intentional. 9–10 = editorial only. Nudge only if total < 80.
 
 FIELDS:
-- label: MAX 6 words. An arresting, Instagram-worthy capsule of this exact outfit — specific to the garment, colour, and vibe you see. The energy to aim for (do NOT copy): "the kurta knows what it's doing", "one belt away from iconic", "navy doing the heavy lifting", "colour story: still finding the plot", "embroidery carrying the whole look". No hashtags. No full stops. Must feel like it could appear on a Vogue India reel.
-- vibe_line: MAX 12 words. One crisp, editorial sentence. The kind a Creative Director would say while reviewing a lookbook. Specific to this outfit. No full stops.
-- whats_working: MAX 20 words. Name the single strongest element and say precisely WHY it works — fabric, colour choice, proportion, styling detail. Sound like you are writing a design review. Not "the colours look nice." More like: "The deep navy jacquard against cream dhoti pants creates exactly the right formal tension."
-- nudge: MAX 20 words. One specific, immediately actionable correction. Name the exact piece or detail. Sound like a mentor mid-critique — clear, direct, not unkind. Not "add accessories." More like: "A slim oxidised silver cuff on the left wrist would anchor the whole look."
+- label: ≤6 words, Instagram-worthy, outfit-specific (e.g. "navy doing the heavy lifting")
+- vibe_line: ≤12 words, editorial tone, no full stop
+- whats_working: ≤20 words — name strongest element and exactly WHY
+- nudge: ≤20 words — one specific fix, name the exact piece
+- tips ×4: ≤25 words each, designer-note precision. Never suggest what is already worn.
 
-TIP QUALITY — this is critical:
-Each tip must read like a designer note, not a style blog caption. Be precise:
-- Name the specific item, colour, or garment element you are addressing
-- Reference what is already in the observation — do not invent things that are not there
-- Suggest the exact fix: a specific accessory, colour swap, or proportion change
-- Avoid vague words: "pop of colour", "statement piece", "something bold" — these are lazy. Be specific.
-- Good tip: "The ivory dhoti needs a pointed-toe tan juttis — the sandals are dropping the formality register."
-- Bad tip: "Consider adding accessories to complete the look."
-- Each tip MAX 25 words.
+RULES:
+- One person, outfit visible → scoreable: true. Else false.
+- NEVER suggest accessories already worn. Cross-check every tip against observation.
+- Gender neutral. Indian English. No filler.
 
-─────────────────────────────
-ABSOLUTE RULES
-─────────────────────────────
-- Score ONLY if exactly one person is visible with outfit clearly shown. Multiple people or non-fashion image → scoreable: false.
-- NEVER suggest an accessory already visible in the observation. Person wearing a dupatta? Do NOT suggest a dupatta. Earrings already on? No earring tip. Belt visible? No belt suggestion. Cross-check every tip against your observation before writing it. Suggesting what they already have is a factual error — it will immediately destroy your credibility.
-- Gender neutral always. No "girl", "queen", "king", "bro" — address the look, not the person.
-- Indian English — precise, warm, authoritative. Bollywood or cultural references are welcome when they add wit. Never sarcastic, never dismissive.
-- Short sentences. No flowery filler. Every word earns its place.
+2026 TRENDS — reward: Cloud Dancer, Burnished Lilac, Lava Falls, Alexandrite, Coral Red, Forest Moss, Canary Yellow. Jacquard, bouclé, matte velvet, embroidery. Asymmetric cuts, oversized proportions, statement belts, sculptural jewellery, pointed-toe shoes. Kurta+white sneakers (intentional), saree+crop blouse, jhumkas+streetwear.
+Avoid: drop-waist, bodycon, skinny fits, pastel-only, micro bags, dainty minimalist jewellery.
 
-─────────────────────────────
-2026 TREND INTELLIGENCE
-─────────────────────────────
-COLOURS TO REWARD: Pantone Cloud Dancer (off-white), Burnished Lilac, Lava Falls (deep red-brown), Alexandrite (teal), Acacia (muted gold), Coral Red, Forest Moss, Mandarin Orange, Canary Yellow, Chartreuse. Bold saturated tones — pastels are fading.
+image_prompt: Only if nudge exists. "[man/woman] wearing [exact outfit+accessories], fashion editorial, full body, studio background, soft light, sharp focus." ≤50 words. Never start with "person".
 
-SILHOUETTES TO REWARD: Asymmetric cuts, layered hems, midi-to-maxi hybrids, relaxed draped necklines cinched at waist, cropped boxy jackets, structured longline shapes, 1970s retro tailoring, intentional oversized proportions.
-
-FABRICS TO REWARD: Jacquard (floral, geometric, 3D raised), bouclé, matte velvet, crochet, embroidery, sequins, natural fibres — linen, cotton blends, lyocell. Tactile richness is the 2026 mood.
-
-ACCESSORIES TO REWARD: Statement belts with oversized buckles, bold sculptural jewellery (oversized gemstones, Art Deco shapes), woven leather bags, crescent bags, pointed or square-toe shoes, vintage revival (satin scarves).
-
-WHAT IS OUT: Drop-waist, bubble hems, bodycon, ultra-skinny fits, faded denim, dainty minimalist jewellery, micro bags, chunky rounded-toe chelsea boots, pastel-only outfits.
-
-INDIA-SPECIFIC TRENDS TO REWARD: Kurta with clean white sneakers (intentional, not lazy), saree with crop top or structured blouse, jhumkas with contemporary streetwear, Indo-Western fusion with clear intention, co-ords with utility or cargo details, comfort silhouettes with a strong colour story.
-
-─────────────────────────────
-IMAGE PROMPT (for the "new look" visualisation)
-─────────────────────────────
-- Only populate image_prompt when nudge is not null (score < 80)
-- Write a precise Flux/SDXL generation prompt for the improved outfit
-- Describe exactly ONE person, ONE outfit, standing still, facing camera
-- Be specific: exact garment names, exact colours, fabric descriptors, accessories
-- No vague adjectives like "stylish" or "improved" — describe what they are literally wearing
-- Structure: "[man/woman] wearing [top], [bottom], [shoes if visible], [accessories], [occasion], fashion editorial photograph, full body, clean studio background, soft natural lighting, sharp focus"
-- CRITICAL: Start with "man" or "woman" based on visible gender presentation. Never "person" — image models default female.
-- MAX 50 words
-
-─────────────────────────────
-PARTIAL BODY RULES
-─────────────────────────────
-- partial_body: true if only upper OR only lower body is visible. false if full body is shown.
-- shoes_visible: true only if footwear is clearly in frame.
-- If shoes_visible is false: HARD RULE — no mention of shoes, footwear, loafers, heels, sandals, boots, or anything below the ankle in any field. You cannot see them. Suggest only what is visible.
-- If partial_body is true: HARD CAPS — silhouette MAX 10/25, intentionality MAX 13/25. Total MUST be below 6.5. Nudge must say to upload a full-body shot. No exceptions.
+PARTIAL BODY: partial_body:true if only upper or lower visible. shoes_visible:true only if footwear in frame. No shoe mentions if shoes_visible:false. If partial_body:true → silhouette ≤10, intentionality ≤13, total <6.5.
 
 Respond ONLY with valid JSON, no markdown:
-{
-  "scoreable": true,
-  "partial_body": false,
-  "shoes_visible": true,
-  "observation": "Precise designer's eye description: exact garments, colours, fabrics (where visible), all accessories already present, fit, proportions, inferred occasion. This is the ground truth — everything else must be consistent with this.",
-  "scores": { "color_harmony": 0, "outfit_cohesion": 0, "intentionality": 0, "silhouette": 0, "total": 0 },
-  "label": "",
-  "vibe_line": "",
-  "whats_working": "",
-  "nudge": null,
-  "image_prompt": null,
-  "tips": {
-    "color_harmony": "Specific palette critique or colour suggestion — name the exact tones. Max 25 words.",
-    "outfit_cohesion": "Name the exact piece or element disrupting cohesion and suggest the precise fix. Max 25 words.",
-    "intentionality": "Name a specific accessory or finishing detail that is missing or could be elevated. Never suggest what is already there. Max 25 words.",
-    "silhouette": "Name the exact proportion or fit issue and prescribe the correction. No shoes unless shoes_visible is true. Max 25 words."
-  },
-  "fingerprint": []
-}
+{"scoreable":true,"partial_body":false,"shoes_visible":true,"observation":"exact garments, colours, fabrics, accessories worn, fit, occasion","scores":{"color_harmony":0,"outfit_cohesion":0,"intentionality":0,"silhouette":0,"total":0},"label":"","vibe_line":"","whats_working":"","nudge":null,"image_prompt":null,"tips":{"color_harmony":"","outfit_cohesion":"","intentionality":"","silhouette":""},"fingerprint":[]}
 
-If not scoreable: { "scoreable": false, "reason": "brief reason" }`;
+If not scoreable: {"scoreable":false,"reason":"brief reason"}`;
 
 const processingMessages = [
   ["Checking your outfit...", "Give us a second, we're looking at everything"],
@@ -186,7 +91,10 @@ function showScreen(id) {
 function goHome() {
   currentImageBase64 = null;
   currentImagePrompt = null;
+  currentShareData = null;
   if (currentLookImageUrl) { URL.revokeObjectURL(currentLookImageUrl); currentLookImageUrl = null; }
+  if (currentShareCardUrl) { URL.revokeObjectURL(currentShareCardUrl); currentShareCardUrl = null; }
+  currentShareCaption = null;
   document.getElementById('fileInput').value = '';
   document.getElementById('cameraInput').value = '';
   document.querySelectorAll('.dim-item').forEach(d => d.classList.remove('open'));
@@ -264,13 +172,8 @@ document.getElementById('cameraInput').addEventListener('change', (e) => {
   handleImage(e.target.files[0]);
 });
 
-// Upload zone click
-document.getElementById('uploadZone').addEventListener('click', () => {
-  document.getElementById('fileInput').click();
-});
-
-// Drag and drop
-const zone = document.getElementById('uploadZone');
+// Drag and drop on entire home screen
+const zone = document.getElementById('screen-home');
 zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
 zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
 zone.addEventListener('drop', (e) => {
@@ -334,7 +237,7 @@ async function startAnalysis() {
 
     if (!response.ok) {
       const msg = data.error?.message || `API error ${response.status}`;
-      if (response.status === 401) { localStorage.removeItem('dc_api_key'); showKeyModal(); return; }
+      if (response.status === 401) { throw new Error('API key error. Please check your Groq API key.'); }
       throw new Error(msg);
     }
 
@@ -401,6 +304,7 @@ function displayResult(result) {
   const { scores, label, vibe_line, whats_working, nudge, tips, image_prompt, partial_body, shoes_visible, observation } = result;
   currentImagePrompt = image_prompt || null;
   const total = scores.total;
+  currentShareData = { score: total / 10, label, vibe_line };
 
   // Show partial body notice if applicable
   const partialNotice = document.getElementById('partialBodyNotice');
@@ -603,20 +507,173 @@ function closeNewLook(e) {
   document.getElementById('newlookOverlay').classList.remove('open');
 }
 
-function shareScore() {
-  const score = document.getElementById('scoreNum').textContent;
-  const label = document.getElementById('scoreLabel').textContent;
-  const appUrl = CONFIG.APP_URL;
-  const text = `My outfit scored ${score}/10 ✨\n"${label}"\n\n#PoshakAI #OOTD #OutfitCheck #StyleScore #DripCheck`;
-  if (navigator.share) {
-    navigator.share({ title: 'PoshakbyAI — drip.check', text, url: appUrl });
-  } else {
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = document.getElementById('shareBtn');
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Share', 2000);
-    });
+function buildShareCaption() {
+  if (!currentShareData) return '';
+  const score = currentShareData.score.toFixed(1);
+  const label = currentShareData.label || '';
+  return `Dress Better. Daily. ✨\n\nScore: ${score}/10 — "${label}"\n\nRate yours → poshakbyai.com\n\n#poshakbyai #PoshakAI #OOTD #OutfitCheck #StyleScore #DressBetterDaily`;
+}
+
+async function generateShareCard() {
+  const W = 600, H = 750;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  await document.fonts.ready;
+
+  // Draw outfit photo (cover-fill entire canvas)
+  const src = document.getElementById('previewImg').src;
+  const img = await new Promise((res, rej) => {
+    const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src;
+  });
+  const scale = Math.max(W / img.width, H / img.height);
+  const iw = img.width * scale, ih = img.height * scale;
+  ctx.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
+
+  // Subtle overall darkening
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Bottom gradient overlay
+  const grad = ctx.createLinearGradient(0, H - 230, 0, H);
+  grad.addColorStop(0, 'rgba(26,23,20,0)');
+  grad.addColorStop(0.5, 'rgba(26,23,20,0.88)');
+  grad.addColorStop(1, 'rgba(26,23,20,1)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, H - 230, W, 230);
+
+  const PAD = 30;
+
+  // Score number (left side)
+  ctx.textAlign = 'left';
+  ctx.font = '400 64px "Playfair Display", Georgia, serif';
+  ctx.fillStyle = '#C84B23';
+  ctx.fillText(currentShareData.score.toFixed(1), PAD, H - 86);
+
+  // /10
+  const scoreW = ctx.measureText(currentShareData.score.toFixed(1)).width;
+  ctx.font = '300 20px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(247,244,239,0.35)';
+  ctx.fillText('/10', PAD + scoreW + 5, H - 100);
+
+  // Label (italic, below score)
+  ctx.font = 'italic 400 14px "Playfair Display", Georgia, serif';
+  ctx.fillStyle = 'rgba(247,244,239,0.72)';
+  const maxLabelW = W - PAD * 2 - 140;
+  let lbl = '\u201C' + (currentShareData.label || '') + '\u201D';
+  if (ctx.measureText(lbl).width > maxLabelW) {
+    lbl = lbl.slice(0, -1);
+    while (ctx.measureText(lbl + '\u2026\u201D').width > maxLabelW && lbl.length > 2) {
+      lbl = lbl.slice(0, -1);
+    }
+    lbl += '\u2026\u201D';
   }
+  ctx.fillText(lbl, PAD, H - 56);
+
+  // Brand (bottom right)
+  ctx.textAlign = 'right';
+  ctx.font = '500 13px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(247,244,239,0.45)';
+  ctx.fillText('poshakbyAI', W - PAD, H - 26);
+
+  return new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+}
+
+async function shareScore() {
+  if (!currentShareData) return;
+
+  const btn = document.getElementById('shareBtn');
+  const origText = btn.textContent;
+  btn.textContent = 'Preparing…';
+  btn.disabled = true;
+
+  let blob;
+  try {
+    blob = await generateShareCard();
+  } catch (_) {
+    blob = null;
+  }
+
+  const caption = buildShareCaption();
+
+  // Mobile: try Web Share API with image file (triggers native share sheet → Instagram)
+  if (blob && navigator.share && navigator.canShare) {
+    const testFile = new File([blob], 'poshakbyai-score.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare({ files: [testFile] })) {
+      try {
+        await navigator.share({
+          title: 'PoshakByAI — Dress Better. Daily.',
+          text: caption,
+          files: [testFile]
+        });
+        track('share_instagram');
+        btn.textContent = origText;
+        btn.disabled = false;
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          btn.textContent = origText;
+          btn.disabled = false;
+          return;
+        }
+        // fall through to modal
+      }
+    }
+  }
+
+  btn.textContent = origText;
+  btn.disabled = false;
+
+  // Desktop / fallback: show share modal with card preview
+  if (blob) {
+    if (currentShareCardUrl) URL.revokeObjectURL(currentShareCardUrl);
+    currentShareCardUrl = URL.createObjectURL(blob);
+    currentShareCaption = caption;
+    showShareModal(currentShareCardUrl, caption);
+  } else {
+    // Last resort: text-only share or clipboard copy
+    if (navigator.share) {
+      navigator.share({ title: 'poshakbyAI', text: caption, url: CONFIG.APP_URL }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(caption).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = origText; }, 2000);
+      });
+    }
+  }
+}
+
+function showShareModal(imgUrl, caption) {
+  document.getElementById('shareCardImg').src = imgUrl;
+  currentShareCaption = caption;
+  document.getElementById('copyCaptionBtn').textContent = 'Copy caption';
+  document.getElementById('shareOverlay').classList.add('open');
+}
+
+function closeShareModal(e) {
+  if (e && e.target !== document.getElementById('shareOverlay')) return;
+  document.getElementById('shareOverlay').classList.remove('open');
+}
+
+function downloadShareCard() {
+  if (!currentShareCardUrl) return;
+  const a = document.createElement('a');
+  a.href = currentShareCardUrl;
+  a.download = 'poshakbyai-score.jpg';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  track('share_card_download');
+}
+
+function copyShareCaption() {
+  if (!currentShareCaption) return;
+  navigator.clipboard.writeText(currentShareCaption).then(() => {
+    const btn = document.getElementById('copyCaptionBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy caption'; }, 2000);
+  });
 }
 
 function toggleDim(el) {
