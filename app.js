@@ -210,15 +210,13 @@ async function callGroq(imageBase64, mediaType) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'qwen/qwen3.6-27b',
-      max_tokens: 1500,
-      reasoning_effort: 'none',
-      temperature: 0.7,
-      response_format: { type: 'json_object' },
+      max_tokens: 6000,
+      include_reasoning: false,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: [
           { type: 'image_url', image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
-          { type: 'text', text: 'Score this outfit.' }
+          { type: 'text', text: 'Score this outfit. Only return the json.' }
         ]}
       ]
     })
@@ -245,7 +243,13 @@ async function startAnalysis() {
 
     const rawText = data.choices?.[0]?.message?.content || '';
     if (!rawText) throw new Error('Empty response. Try again.');
-    const clean = rawText.replace(/```json|```/g, '').trim();
+    let clean = rawText.replace(/```json|```/g, '').trim();
+    // Extract JSON in case of <think> blocks or other conversational text
+    const firstBrace = clean.indexOf('{');
+    const lastBrace = clean.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
+      clean = clean.substring(firstBrace, lastBrace + 1);
+    }
     const result = JSON.parse(clean);
 
     if (!result.scoreable) {
